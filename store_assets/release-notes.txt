@@ -1,0 +1,17 @@
+Version 1.0.0
+
+Initial release of Quran Teacher Family.
+
+- Full Arabic Quran reader (114 surahs)
+- Word-by-word Arabic teacher mode
+- Repeat practice with Muallim and Mujawwad recitation styles
+- Memorization tracker per learner
+- Daily assignments
+- Local learner profiles
+- Bookmarks and notes
+- Search (surah names, Arabic text, English meaning)
+- Progress reports and exports
+- Optional English meaning (Pickthall, hidden by default)
+- Three themes: Light, Warm, Dark
+- Offline-first design — no internet required
+- No account, no ads, no analytics, no tracking

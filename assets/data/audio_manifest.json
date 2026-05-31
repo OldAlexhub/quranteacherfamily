@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "description": "Audio manifest for Quran Teacher Family. Entries map surah/ayah to asset pack audio files.",
+  "recitationStyles": ["muallim", "mujawwad"],
+  "assetPacks": {
+    "muallim": "audio_muallim_pack",
+    "mujawwad": "audio_mujawwad_pack"
+  },
+  "filePattern": {
+    "muallim": "audio/muallim/{surah3}/{ayah3}.mp3",
+    "mujawwad": "audio/mujawwad/{surah3}/{ayah3}.mp3"
+  },
+  "note": "Audio files are delivered via Google Play Asset Delivery. The patterns above use zero-padded 3-digit numbers. The asset packs audio_muallim_pack and audio_mujawwad_pack must be downloaded before playback.",
+  "entries": []
+}

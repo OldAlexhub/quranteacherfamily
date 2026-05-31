@@ -1,97 +1,119 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Quran Teacher Family
 
-# Getting Started
+**Arabic-first Quran teaching for Muslim families — free with ads**  
+by Old Alex Hub | Package: `com.oldalexhub.quranteacherfamily`
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+---
 
-## Step 1: Start Metro
+## Features
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+- Full Arabic Quran reader (all 114 surahs via Al-Quran Cloud API)
+- Word-by-word Arabic teacher mode
+- Repeat practice (listen and repeat ayahs)
+- Memorization tracker per learner
+- Daily assignments with parent-created tasks
+- Local learner profiles (no account required)
+- Bookmarks and notes (local)
+- Search (surah names, Arabic text, English meaning)
+- Progress reports and exports
+- Optional English meaning (Pickthall, public domain)
+- Two recitation styles: Muallim (Al-Husary) and Mujawwad (Al-Husary)
+- Three themes: Light, Warm, Dark
+- Free with ads (banner + limited interstitial)
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+## Data sources
 
-```sh
-# Using npm
-npm start
+- **Arabic text**: Al-Quran Cloud API (alquran.cloud) — free, no key
+- **English meaning**: Pickthall translation via Al-Quran Cloud
+- **Audio**: Islamic Network CDN (cdn.islamic.network) — Husary murattal / mujawwad
 
-# OR using Yarn
-yarn start
+## Monetization
+
+- **Free with ads.**
+- Banner ads: enabled in non-Quran screens (Home, Dashboard, Surah List, Progress, Settings)
+- Interstitial ads: enabled, strictly limited to natural stopping points
+- App Open ads: **disabled and removed**
+- Rewarded ads: disabled
+- Native ads: disabled
+- No mediation in version 1
+
+### AdMob configuration
+
+Edit `src/config/adsConfig.ts` to update IDs:
+
+```
+ADMOB_APP_ID       = ca-app-pub-7831002909037560~3940431384
+BANNER_AD_UNIT_ID  = ca-app-pub-7831002909037560/6305750596
+INTERSTITIAL_AD_UNIT_ID = ca-app-pub-7831002909037560/6170019228
 ```
 
-## Step 2: Build and run your app
+**Debug builds automatically use Google test IDs** (`__DEV__ === true`). Release builds use the real IDs.
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+### Interstitial rules (enforced in `interstitialAdService.ts`)
 
-### Android
+- Max 1 interstitial every 10 minutes
+- Max 3 per session
+- Minimum 3 minutes in app before first interstitial
+- Every 3 completion events (assignments or practice sessions)
+- Never during audio playback, Quran reading, or active practice
+- Only after: completed assignment, completed practice session, exported report
 
-```sh
-# Using npm
-npm run android
+---
 
-# OR using Yarn
-yarn android
+## How to run
+
+```bash
+npm install
+npm start           # Metro bundler
+npm run android     # Run on device/emulator
 ```
 
-### iOS
+## How to build release
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+```bash
+# Check environment
+python release.py --check-env
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+# Full release build
+python release.py
 
-```sh
-bundle install
+# Skip screenshots
+python release.py --skip-screenshots
+
+# Validate ads config only
+python release.py --validate-content-only
 ```
 
-Then, and every time you update your native dependencies, run:
+`release.py` automatically:
+- Detects Java + Android SDK
+- Validates AdMob config in `src/config/adsConfig.ts`
+- Validates AndroidManifest has AdMob app ID metadata
+- Validates INTERNET permission
+- Builds release APK + AAB
+- Copies to `releases/builds/`
 
-```sh
-bundle exec pod install
-```
+## Android permissions
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+- `INTERNET` — Quran API, audio CDN, and ads
+- `ACCESS_NETWORK_STATE` — AdMob connectivity check
+- `POST_NOTIFICATIONS` — Optional daily reminders
+- `FOREGROUND_SERVICE` + `FOREGROUND_SERVICE_MEDIA_PLAYBACK` — Audio playback
 
-```sh
-# Using npm
-npm run ios
+## Google Play Upload
 
-# OR using Yarn
-yarn ios
-```
+1. `python release.py` → `releases/builds/QuranTeacherFamily-release.aab`
+2. Create app in Play Console: `com.oldalexhub.quranteacherfamily`
+3. Upload the `.aab`
+4. Store listing: `store_assets/store-listing.md`
+5. Data safety: `store_assets/data-safety-notes.md`
+6. Set AdMob app ID in Play Console (matches manifest)
+7. Families policy: review if targeting children
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+## Keystore backup
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+**IMPORTANT**: Back up `android/keystore/quranteacherfamily-release.keystore` securely.
 
-## Step 3: Modify your app
+---
 
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+*Quran Teacher Family — by Old Alex Hub*  
+*Learning companion only. Does not replace a qualified Quran teacher.*

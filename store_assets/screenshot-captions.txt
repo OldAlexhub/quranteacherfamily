@@ -1,0 +1,23 @@
+01-home-dashboard.png
+Caption: "Your daily Quran learning dashboard — continue reading, today's practice, quick actions"
+
+02-parent-dashboard.png
+Caption: "Parent dashboard — manage learner profiles, assignments, and progress"
+
+03-quran-reader.png
+Caption: "Arabic-first Quran reader — large Arabic text, optional English meaning, audio controls"
+
+04-word-teacher-mode.png
+Caption: "Word-by-word Arabic teacher mode — teach each word with audio and child response tracking"
+
+05-repeat-practice.png
+Caption: "Repeat practice — listen and repeat selected ayahs multiple times to build memorization"
+
+06-memorization-tracker.png
+Caption: "Memorization tracker — mark and track every ayah's status per learner"
+
+07-assignments.png
+Caption: "Daily assignments — parent-created structured Quran tasks for each learner"
+
+08-settings.png
+Caption: "Settings — themes, font sizes, recitation style, privacy policy, content attribution"

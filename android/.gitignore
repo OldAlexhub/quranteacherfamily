@@ -1,0 +1,17 @@
+# Generated files
+local.properties
+.gradle
+build/
+captures/
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+
+# Keystore (NEVER commit these)
+keystore/*.keystore
+keystore/*.jks
+keystore/keystore.properties
+
+# Debug keystore is OK to commit for development (not release)
+!app/debug.keystore
