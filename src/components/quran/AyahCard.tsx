@@ -1,5 +1,6 @@
-import React, {useState} from 'react';
-import {View, TouchableOpacity, Text, StyleSheet, ViewStyle} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {View, TouchableOpacity, Text, StyleSheet} from 'react-native';
+import type {GestureResponderEvent, ViewStyle} from 'react-native';
 import {useTheme} from '../../theme';
 import {Spacing, Radii, Shadows} from '../../theme/spacing';
 import type {Ayah, PracticeStatusType} from '../../types';
@@ -39,7 +40,18 @@ export function AyahCard({
   const theme = useTheme();
   const c = theme.colors;
   const [localShowMeaning, setLocalShowMeaning] = useState(showMeaning);
-  const shouldShowMeaning = forceShowMeaning !== undefined ? forceShowMeaning : localShowMeaning;
+  const shouldShowMeaning = forceShowMeaning === true || localShowMeaning;
+
+  useEffect(() => {
+    if (forceShowMeaning === false) {
+      setLocalShowMeaning(false);
+    }
+  }, [forceShowMeaning]);
+
+  function handleInnerPress(event: GestureResponderEvent, action: () => void) {
+    event.stopPropagation();
+    action();
+  }
 
   const statusColor = {
     memorized: c.memorized,
@@ -73,17 +85,17 @@ export function AyahCard({
           <View style={{width: 10, height: 10, borderRadius: 5, backgroundColor: statusColor, marginRight: Spacing[2]}} />
         )}
         {onPlay ? (
-          <TouchableOpacity onPress={onPlay} style={styles.iconBtn} accessibilityLabel="Play ayah">
+          <TouchableOpacity onPress={event => handleInnerPress(event, onPlay)} style={styles.iconBtn} accessibilityLabel="Play ayah">
             <Text style={{color: c.primary, fontSize: 18}}>▶</Text>
           </TouchableOpacity>
         ) : null}
         {onBookmark ? (
-          <TouchableOpacity onPress={onBookmark} style={styles.iconBtn} accessibilityLabel={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}>
+          <TouchableOpacity onPress={event => handleInnerPress(event, onBookmark)} style={styles.iconBtn} accessibilityLabel={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}>
             <Text style={{color: isBookmarked ? c.accent : c.textMuted, fontSize: 18}}>🔖</Text>
           </TouchableOpacity>
         ) : null}
         {onWordMode ? (
-          <TouchableOpacity onPress={onWordMode} style={styles.iconBtn} accessibilityLabel="Word by word mode">
+          <TouchableOpacity onPress={event => handleInnerPress(event, onWordMode)} style={styles.iconBtn} accessibilityLabel="Word by word mode">
             <Text style={{color: c.primary, fontSize: 16}}>ا</Text>
           </TouchableOpacity>
         ) : null}
@@ -111,7 +123,7 @@ export function AyahCard({
         <>
           {!shouldShowMeaning && (
             <TouchableOpacity
-              onPress={() => setLocalShowMeaning(true)}
+              onPress={event => handleInnerPress(event, () => setLocalShowMeaning(true))}
               style={{paddingHorizontal: Spacing[4], paddingBottom: Spacing[3]}}
               accessibilityLabel="Show English meaning"
             >
@@ -124,13 +136,15 @@ export function AyahCard({
                 accessibilityLabel={`English meaning: ${ayah.englishMeaning}`}>
                 {ayah.englishMeaning}
               </Text>
-              <TouchableOpacity
-                onPress={() => setLocalShowMeaning(false)}
-                style={{marginTop: 4}}
-                accessibilityLabel="Hide meaning"
-              >
-                <Text style={{color: c.textMuted, fontSize: 12}}>Hide meaning</Text>
-              </TouchableOpacity>
+              {forceShowMeaning !== true ? (
+                <TouchableOpacity
+                  onPress={event => handleInnerPress(event, () => setLocalShowMeaning(false))}
+                  style={{marginTop: 4}}
+                  accessibilityLabel="Hide meaning"
+                >
+                  <Text style={{color: c.textMuted, fontSize: 12}}>Hide meaning</Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
           )}
         </>

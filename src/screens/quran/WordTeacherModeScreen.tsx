@@ -19,20 +19,24 @@ export function WordTeacherModeScreen() {
   const theme = useTheme();
   const c = theme.colors;
   const route = useRoute<Route>();
-  const {surahNumber, ayahNumber} = route.params;
+  const {surahNumber, ayahNumber, wordIndex} = route.params;
 
   const preferences = usePreferencesStore(s => s.preferences);
   const ayah = getAyah(surahNumber, ayahNumber);
   const surah = getSurah(surahNumber);
 
-  const words = ayah?.arabicText.trim().split(/\s+/) ?? [];
-  const [currentWordIdx, setCurrentWordIdx] = useState(0);
+  const words = ayah?.words?.length
+    ? ayah.words.map(word => word.arabicWord)
+    : (ayah?.arabicText.trim().split(/\s+/) ?? []);
+  const initialWordIndex = Math.min(Math.max(wordIndex ?? 0, 0), Math.max(words.length - 1, 0));
+  const [currentWordIdx, setCurrentWordIdx] = useState(initialWordIndex);
   const [showTransliteration, setShowTransliteration] = useState(false);
   const [showWordMeaning, setShowWordMeaning] = useState(false);
   const [repeatCount, setRepeatCount] = useState(preferences.defaultRepeatCount);
   const [checklist, setChecklist] = useState<Record<number, 'listened' | 'repeated' | 'needs_help' | 'done'>>({});
 
   const currentWord = words[currentWordIdx] ?? '';
+  const currentWordMeaning = ayah?.words?.[currentWordIdx]?.englishMeaning;
   const isLastWord = currentWordIdx >= words.length - 1;
   const isFirstWord = currentWordIdx === 0;
 
@@ -43,6 +47,10 @@ export function WordTeacherModeScreen() {
   async function playCurrentWord() {
     await playAyah(surahNumber, ayahNumber, preferences.selectedRecitationStyle);
   }
+
+  useEffect(() => {
+    setCurrentWordIdx(Math.min(Math.max(wordIndex ?? 0, 0), Math.max(words.length - 1, 0)));
+  }, [wordIndex, words.length]);
 
   if (!ayah || !surah) {
     return (
@@ -64,10 +72,10 @@ export function WordTeacherModeScreen() {
         {/* Full ayah with highlighting */}
         <AppCard style={{marginBottom: Spacing[4]}}>
           <AppText variant="caption" style={{color: c.textMuted, marginBottom: Spacing[2]}}>Full Ayah</AppText>
-          <View style={{flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end'}}>
+          <View style={{flexDirection: 'row-reverse', flexWrap: 'wrap', justifyContent: 'flex-start', alignItems: 'center'}}>
             {words.map((word, idx) => (
               <TouchableOpacity
-                key={idx}
+                key={`${idx}-${word}`}
                 onPress={() => setCurrentWordIdx(idx)}
                 style={{margin: 3, padding: 4, borderRadius: 6, backgroundColor: idx === currentWordIdx ? c.primary + '20' : 'transparent', borderWidth: idx === currentWordIdx ? 1.5 : 0, borderColor: c.primary}}
                 accessibilityLabel={`Word ${idx + 1}`}
@@ -76,6 +84,8 @@ export function WordTeacherModeScreen() {
                   fontSize: preferences.arabicFontSize * 0.85,
                   color: idx === currentWordIdx ? c.primary : c.textArabic,
                   fontWeight: idx === currentWordIdx ? '700' : '400',
+                  writingDirection: 'rtl',
+                  textAlign: 'right',
                 }}>
                   {word}
                 </Text>
@@ -88,7 +98,7 @@ export function WordTeacherModeScreen() {
         <AppCard style={{marginBottom: Spacing[4], alignItems: 'center', paddingVertical: Spacing[6]}}>
           <AppText variant="caption" style={{color: c.textMuted, marginBottom: Spacing[2]}}>Word {currentWordIdx + 1} of {words.length}</AppText>
           <Text
-            style={{fontSize: preferences.arabicFontSize + 16, color: c.primary, fontWeight: '700', textAlign: 'center', marginBottom: Spacing[3]}}
+            style={{fontSize: preferences.arabicFontSize + 16, color: c.primary, fontWeight: '700', textAlign: 'center', writingDirection: 'rtl', marginBottom: Spacing[3]}}
             accessibilityLabel={`Arabic word: ${currentWord}`}
           >
             {currentWord}
@@ -120,7 +130,7 @@ export function WordTeacherModeScreen() {
 
           {showWordMeaning && (
             <AppText variant="body" english style={{color: c.textEnglish, textAlign: 'center', fontStyle: 'italic'}}>
-              (Word meaning lookup not available)
+              {currentWordMeaning ?? 'Word-level meaning is not available offline for this ayah.'}
             </AppText>
           )}
         </AppCard>

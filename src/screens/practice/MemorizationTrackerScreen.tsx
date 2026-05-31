@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useMemo, useState} from 'react';
 import {View, Text, FlatList, TouchableOpacity, SectionList} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useTheme} from '../../theme';
@@ -36,8 +36,16 @@ export function MemorizationTrackerScreen() {
   const getPracticeStatus = useProgressStore(s => s.getPracticeStatus);
   const updatePracticeStatus = useProgressStore(s => s.updatePracticeStatus);
   const bulkUpdate = useProgressStore(s => s.bulkUpdatePracticeStatus);
-  const needsReview = useProgressStore(s => activeLearner ? s.getNeedsReviewList(activeLearner.id) : []);
-  const memorized = useProgressStore(s => activeLearner ? s.getMemorizedList(activeLearner.id) : []);
+  const practiceStatus = useProgressStore(s => s.practiceStatus);
+  const learnerPracticeStatus = activeLearner ? practiceStatus[activeLearner.id] : undefined;
+  const needsReview = useMemo(
+    () => Object.values(learnerPracticeStatus ?? {}).filter(s => s.status === 'needs_review'),
+    [learnerPracticeStatus],
+  );
+  const memorized = useMemo(
+    () => Object.values(learnerPracticeStatus ?? {}).filter(s => s.status === 'memorized'),
+    [learnerPracticeStatus],
+  );
   const [expandedSurah, setExpandedSurah] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'surahs' | 'needs_review' | 'memorized'>('surahs');
 

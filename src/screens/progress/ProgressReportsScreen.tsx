@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useMemo, useState} from 'react';
 import {View, Text, ScrollView, TouchableOpacity, Share, Alert} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
@@ -27,11 +27,40 @@ export function ProgressReportsScreen() {
 
   const readingProgress = useProgressStore(s => activeLearner ? s.readingProgress[activeLearner.id] : null);
   const listeningProgress = useProgressStore(s => activeLearner ? s.listeningProgress[activeLearner.id] : null);
-  const memProgress = useProgressStore(s => activeLearner ? s.calculateMemorizationProgress(activeLearner.id) : null);
-  const sessions = useProgressStore(s => activeLearner ? s.getPracticeSessions(activeLearner.id) : []);
-  const allAssignments = useAssignmentStore(s => activeLearner ? s.getAllAssignments(activeLearner.id) : []);
-  const bookmarks = useBookmarkStore(s => s.getBookmarksByLearner(activeLearner?.id));
-  const notes = useBookmarkStore(s => s.notes.filter(n => !n.learnerId || n.learnerId === activeLearner?.id));
+  const practiceStatus = useProgressStore(s => s.practiceStatus);
+  const practiceSessions = useProgressStore(s => s.practiceSessions);
+  const assignments = useAssignmentStore(s => s.assignments);
+  const bookmarkList = useBookmarkStore(s => s.bookmarks);
+  const noteList = useBookmarkStore(s => s.notes);
+  const activeLearnerId = activeLearner?.id;
+  const learnerPracticeStatus = activeLearnerId ? practiceStatus[activeLearnerId] : undefined;
+  const memProgress = useMemo(() => {
+    if (!activeLearnerId) return null;
+    const items = Object.values(learnerPracticeStatus ?? {});
+    return {
+      memorized: items.filter(s => s.status === 'memorized').length,
+      practicing: items.filter(s => s.status === 'practicing').length,
+      needsReview: items.filter(s => s.status === 'needs_review').length,
+      notStarted: items.filter(s => s.status === 'not_started' || s.status === 'learning').length,
+      total: items.length,
+    };
+  }, [activeLearnerId, learnerPracticeStatus]);
+  const sessions = useMemo(
+    () => activeLearnerId ? practiceSessions[activeLearnerId] ?? [] : [],
+    [activeLearnerId, practiceSessions],
+  );
+  const allAssignments = useMemo(
+    () => activeLearnerId ? assignments[activeLearnerId] ?? [] : [],
+    [activeLearnerId, assignments],
+  );
+  const bookmarks = useMemo(
+    () => bookmarkList.filter(b => !activeLearnerId || !b.learnerId || b.learnerId === activeLearnerId),
+    [activeLearnerId, bookmarkList],
+  );
+  const notes = useMemo(
+    () => noteList.filter(n => !n.learnerId || n.learnerId === activeLearnerId),
+    [activeLearnerId, noteList],
+  );
 
   const completedAssignments = allAssignments.filter(a => a.status === 'completed').length;
   const listeningHours = Math.round(((listeningProgress?.listeningSeconds ?? 0) / 3600) * 10) / 10;

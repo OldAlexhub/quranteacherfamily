@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useMemo} from 'react';
 import {View, Text, ScrollView, TouchableOpacity, Alert} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -28,10 +28,17 @@ export function ParentDashboardScreen() {
   const setActiveLearner = useLearnerStore(s => s.setActiveLearner);
   const deleteLearnerFromStore = useLearnerStore(s => s.deleteLearner);
   const progressData = useProgressStore(s => s.readingProgress);
+  const practiceStatus = useProgressStore(s => s.practiceStatus);
   const resetLearnerProgress = useProgressStore(s => s.resetLearnerProgress);
   const allAssignments = useAssignmentStore(s => s.assignments);
-
-  const memorizationProgress = useProgressStore(s => activeLearner ? s.calculateMemorizationProgress(activeLearner.id) : null);
+  const memorizationProgressByLearner = useMemo(() => {
+    return Object.fromEntries(
+      learners.map(learner => {
+        const items = Object.values(practiceStatus[learner.id] ?? {});
+        return [learner.id, items.filter(s => s.status === 'memorized').length];
+      }),
+    );
+  }, [learners, practiceStatus]);
 
   function deleteLearner(id: string) {
     Alert.alert(
@@ -117,7 +124,7 @@ export function ParentDashboardScreen() {
                     <AppText variant="caption" style={{color: c.textMuted}}>Done today</AppText>
                   </View>
                   <View style={{flex: 1, backgroundColor: c.surfaceAlt, borderRadius: Radii.md, padding: Spacing[2], alignItems: 'center'}}>
-                    <AppText variant="heading" weight="bold" style={{color: c.memorized}}>{memorizationProgress?.memorized ?? 0}</AppText>
+                    <AppText variant="heading" weight="bold" style={{color: c.memorized}}>{memorizationProgressByLearner[learner.id] ?? 0}</AppText>
                     <AppText variant="caption" style={{color: c.textMuted}}>Memorized</AppText>
                   </View>
                 </View>

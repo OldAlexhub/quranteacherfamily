@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useMemo} from 'react';
 import {View, TouchableOpacity, Text} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -18,8 +18,16 @@ export function PracticeHomeScreen() {
   const c = theme.colors;
   const navigation = useNavigation<Nav>();
   const activeLearner = useLearnerStore(s => s.getActiveLearner());
-  const needsReviewList = useProgressStore(s => activeLearner ? s.getNeedsReviewList(activeLearner.id) : []);
-  const memorizedList = useProgressStore(s => activeLearner ? s.getMemorizedList(activeLearner.id) : []);
+  const practiceStatus = useProgressStore(s => s.practiceStatus);
+  const learnerPracticeStatus = activeLearner ? practiceStatus[activeLearner.id] : undefined;
+  const needsReviewList = useMemo(
+    () => Object.values(learnerPracticeStatus ?? {}).filter(s => s.status === 'needs_review'),
+    [learnerPracticeStatus],
+  );
+  const memorizedList = useMemo(
+    () => Object.values(learnerPracticeStatus ?? {}).filter(s => s.status === 'memorized'),
+    [learnerPracticeStatus],
+  );
 
   const practiceCards = [
     {
