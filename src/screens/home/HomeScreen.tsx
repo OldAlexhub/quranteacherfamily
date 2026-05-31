@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useMemo} from 'react';
 import {View, Text, TouchableOpacity, ScrollView} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
@@ -21,9 +21,26 @@ export function HomeScreen() {
   const theme = useTheme();
   const c = theme.colors;
   const navigation = useNavigation<Nav>();
-  const activeLearner = useLearnerStore(s => s.getActiveLearner());
-  const continueReading = useProgressStore(s => activeLearner ? s.getContinueReadingLocation(activeLearner.id) : null);
-  const todayAssignments = useAssignmentStore(s => activeLearner ? s.getTodayAssignments(activeLearner.id) : []);
+  const learners = useLearnerStore(s => s.learners);
+  const activeLearnerIdx = useLearnerStore(s => s.activeLearnerIdx);
+  const readingProgress = useProgressStore(s => s.readingProgress);
+  const assignments = useAssignmentStore(s => s.assignments);
+  const activeLearner = learners[activeLearnerIdx] ?? null;
+  const activeLearnerId = activeLearner?.id;
+  const continueReadingProgress = activeLearnerId ? readingProgress[activeLearnerId] : null;
+  const continueReading = continueReadingProgress
+    ? {
+        surahNumber: continueReadingProgress.lastSurahNumber,
+        ayahNumber: continueReadingProgress.lastAyahNumber,
+      }
+    : null;
+  const todayAssignments = useMemo(() => {
+    if (!activeLearnerId) return [];
+    const today = new Date().toISOString().slice(0, 10);
+    return (assignments[activeLearnerId] ?? []).filter(
+      a => a.dueDate.slice(0, 10) <= today && a.status !== 'completed',
+    );
+  }, [activeLearnerId, assignments]);
   const surahs = loadSurahs();
   const continueSurah = continueReading ? surahs.find(s => s.number === continueReading.surahNumber) : null;
 
