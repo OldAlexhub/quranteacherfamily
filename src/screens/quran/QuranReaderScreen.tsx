@@ -14,6 +14,7 @@ import {useProgressStore} from '../../store/useProgressStore';
 import {usePreferencesStore} from '../../store/usePreferencesStore';
 import {useBookmarkStore} from '../../store/useBookmarkStore';
 import {useLearnerStore} from '../../store/useLearnerStore';
+import {Event, useTrackPlayerEvents} from 'react-native-track-player';
 import {playAyah, pauseAudio, stopAudio} from '../../audio/audioPlayer';
 
 type Route = RouteProp<QuranStackParamList, 'QuranReader'>;
@@ -75,6 +76,11 @@ export function QuranReaderScreen() {
     });
   }, [surah, showEnglish, c]);
 
+  // Reset playing state automatically when the audio queue finishes
+  useTrackPlayerEvents([Event.PlaybackQueueEnded, Event.PlaybackError], () => {
+    setIsPlaying(false);
+  });
+
   async function handlePlayAyah(ayahNumber: number) {
     if (playingAyah === ayahNumber && isPlaying) {
       await pauseAudio();
@@ -82,7 +88,7 @@ export function QuranReaderScreen() {
     } else {
       setPlayingAyah(ayahNumber);
       setIsPlaying(true);
-      await playAyah(surahNumber, ayahNumber, preferences.selectedRecitationStyle);
+      await playAyah(surahNumber, ayahNumber, preferences.selectedRecitationStyle, preferences.defaultRepeatCount);
       if (activeLearner) saveLastRead(activeLearner.id, surahNumber, ayahNumber);
     }
   }
@@ -162,6 +168,7 @@ export function QuranReaderScreen() {
       {!loading && !error && (
         <AudioControls
           isPlaying={isPlaying}
+          repeatCount={preferences.defaultRepeatCount}
           onPlay={() => handlePlayAyah(playingAyah ?? (startAyah ?? 1))}
           onPause={() => { pauseAudio(); setIsPlaying(false); }}
           onStop={() => { stopAudio(); setIsPlaying(false); setPlayingAyah(null); }}

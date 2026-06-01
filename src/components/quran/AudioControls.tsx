@@ -70,10 +70,15 @@ export function AudioControls({
       </View>
 
       <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: Spacing[2]}}>
-        {onRepeat ? (
-          <TouchableOpacity onPress={onRepeat} style={{flexDirection: 'row', alignItems: 'center'}} accessibilityLabel={`Repeat ${repeatCount} times`}>
-            <Text style={{color: c.primary, fontSize: 18, marginRight: 4}}>↻</Text>
-            <Text style={{color: c.primary, fontSize: 13}}>{repeatCount}×</Text>
+        {(onRepeat || repeatCount > 1) ? (
+          <TouchableOpacity
+            onPress={onRepeat}
+            disabled={!onRepeat}
+            style={{flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 8, paddingVertical: 4, borderRadius: Radii.full, backgroundColor: c.primary + '18'}}
+            accessibilityLabel={`Repeat ${repeatCount} times`}
+          >
+            <Text style={{color: c.primary, fontSize: 15}}>↻</Text>
+            <Text style={{color: c.primary, fontSize: 13, fontWeight: '600'}}>{repeatCount}×</Text>
           </TouchableOpacity>
         ) : <View />}
 

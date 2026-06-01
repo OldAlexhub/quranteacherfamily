@@ -136,8 +136,8 @@ export function SettingsScreen() {
         {/* Audio */}
         <SectionHeader title="Audio" />
         <AppCard style={{marginBottom: Spacing[4]}}>
-          <AppText variant="caption" style={{color: c.textMuted, marginBottom: Spacing[2]}}>Default recitation style</AppText>
-          <View style={{flexDirection: 'row', gap: Spacing[2]}}>
+          <AppText variant="caption" style={{color: c.textMuted, marginBottom: Spacing[2]}}>Recitation style</AppText>
+          <View style={{flexDirection: 'row', gap: Spacing[2], marginBottom: Spacing[3]}}>
             {[{value: 'muallim', label: 'Muallim'}, {value: 'mujawwad', label: 'Mujawwad'}].map(opt => (
               <TouchableOpacity
                 key={opt.value}
@@ -149,6 +149,18 @@ export function SettingsScreen() {
               </TouchableOpacity>
             ))}
           </View>
+
+          <Row label="Repeat each ayah" right={
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: Spacing[3]}}>
+              <TouchableOpacity onPress={() => setDefaultRepeat(Math.max(1, prefs.defaultRepeatCount - 1))} accessibilityLabel="Decrease repeat">
+                <Text style={{color: c.primary, fontSize: 22}}>−</Text>
+              </TouchableOpacity>
+              <Text style={{color: c.textPrimary, fontSize: 14, minWidth: 28, textAlign: 'center'}}>{prefs.defaultRepeatCount}×</Text>
+              <TouchableOpacity onPress={() => setDefaultRepeat(prefs.defaultRepeatCount + 1)} accessibilityLabel="Increase repeat">
+                <Text style={{color: c.primary, fontSize: 22}}>+</Text>
+              </TouchableOpacity>
+            </View>
+          } />
         </AppCard>
 
         {/* Practice Defaults */}
@@ -169,18 +181,6 @@ export function SettingsScreen() {
               </View>
             </TouchableOpacity>
           ))}
-
-          <Row label="Repeat count" right={
-            <View style={{flexDirection: 'row', alignItems: 'center', gap: Spacing[3]}}>
-              <TouchableOpacity onPress={() => setDefaultRepeat(Math.max(1, prefs.defaultRepeatCount - 1))} accessibilityLabel="Decrease repeat">
-                <Text style={{color: c.primary, fontSize: 22}}>−</Text>
-              </TouchableOpacity>
-              <Text style={{color: c.textPrimary, fontSize: 14, minWidth: 28, textAlign: 'center'}}>{prefs.defaultRepeatCount}</Text>
-              <TouchableOpacity onPress={() => setDefaultRepeat(prefs.defaultRepeatCount + 1)} accessibilityLabel="Increase repeat">
-                <Text style={{color: c.primary, fontSize: 22}}>+</Text>
-              </TouchableOpacity>
-            </View>
-          } />
 
           <Row label="Delay between repeats (sec)" right={
             <View style={{flexDirection: 'row', alignItems: 'center', gap: Spacing[3]}}>

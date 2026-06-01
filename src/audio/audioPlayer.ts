@@ -37,17 +37,19 @@ export async function playAyah(
   surahNumber: number,
   ayahNumber: number,
   style: RecitationStyle,
+  repeatCount: number = 1,
 ): Promise<void> {
   try {
     await initializePlayer();
     const path = resolveAudioPath(surahNumber, ayahNumber, style);
     await TrackPlayer.reset();
-    await TrackPlayer.add({
-      id: `${surahNumber}_${ayahNumber}_${style}`,
+    const tracks = Array.from({length: Math.max(1, repeatCount)}, (_, i) => ({
+      id: `${surahNumber}_${ayahNumber}_${style}_r${i}`,
       url: path,
       title: `${surahNumber}:${ayahNumber}`,
       artist: style === 'muallim' ? 'Muallim Style' : 'Mujawwad Style',
-    });
+    }));
+    await TrackPlayer.add(tracks);
     await TrackPlayer.play();
   } catch (e) {
     console.warn('playAyah error:', e);
