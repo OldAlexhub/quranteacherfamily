@@ -12,6 +12,7 @@ const DEFAULT_PREFERENCES: UserPreference = {
   selectedRecitationStyle: 'muallim',
   defaultRepeatCount: 3,
   defaultDelaySeconds: 1,
+  defaultPracticeMode: 'listen_only',
   reminderEnabled: false,
   reminderTime: undefined,
   onboardingCompleted: false,
@@ -28,6 +29,8 @@ interface PreferencesState {
   setEnglishHidden: (hidden: boolean) => Promise<void>;
   setRecitationStyle: (style: RecitationStyle) => Promise<void>;
   setDefaultRepeatCount: (count: number) => Promise<void>;
+  setDefaultDelay: (seconds: number) => Promise<void>;
+  setDefaultPracticeMode: (mode: import('../types').PracticeMode) => Promise<void>;
   setOnboardingCompleted: (completed: boolean) => Promise<void>;
   setReminderEnabled: (enabled: boolean, time?: string) => Promise<void>;
   restoreDefaults: () => Promise<void>;
@@ -56,6 +59,8 @@ export const usePreferencesStore = create<PreferencesState>((set, get) => ({
   setEnglishHidden: async (hidden) => get().savePreferences({englishMeaningDefaultHidden: hidden}),
   setRecitationStyle: async (style) => get().savePreferences({selectedRecitationStyle: style}),
   setDefaultRepeatCount: async (count) => get().savePreferences({defaultRepeatCount: Math.max(1, count)}),
+  setDefaultDelay: async (seconds) => get().savePreferences({defaultDelaySeconds: Math.max(0, Math.min(60, seconds))}),
+  setDefaultPracticeMode: async (mode) => get().savePreferences({defaultPracticeMode: mode}),
   setOnboardingCompleted: async (completed) => get().savePreferences({onboardingCompleted: completed}),
   setReminderEnabled: async (enabled, time) => get().savePreferences({reminderEnabled: enabled, reminderTime: time}),
   restoreDefaults: async () => {

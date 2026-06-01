@@ -2,22 +2,28 @@ import React, {useMemo} from 'react';
 import {View, Text, ScrollView, TouchableOpacity, Alert} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import type {HomeStackParamList} from '../../types';
+import type {HomeStackParamList, Assignment} from '../../types';
 import {useTheme} from '../../theme';
-import {Spacing, Radii, Shadows} from '../../theme/spacing';
+import {Spacing, Radii} from '../../theme/spacing';
 import {ScreenWrapper} from '../../components/layout/ScreenWrapper';
 import {AppText} from '../../components/common/AppText';
 import {AppCard} from '../../components/common/AppCard';
 import {BannerAdComponent} from '../../ads/BannerAdComponent';
 import {AppButton} from '../../components/common/AppButton';
 import {SectionHeader} from '../../components/layout/SectionHeader';
-import {ProgressBar} from '../../components/progress/ProgressBar';
 import {useLearnerStore} from '../../store/useLearnerStore';
 import {useProgressStore} from '../../store/useProgressStore';
 import {useAssignmentStore} from '../../store/useAssignmentStore';
 import {storageClearLearner} from '../../storage/storage';
+import {getSurah} from '../../data/loaders';
+import {tryShowInterstitial, recordCompletionEvent} from '../../ads/interstitialAdService';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
+
+const TYPE_ICONS: Record<string, string> = {
+  read_arabic: '📖', listen: '🔊', word_by_word: 'ا',
+  memorization_review: '⭐', free_reading: '🌙',
+};
 
 export function ParentDashboardScreen() {
   const theme = useTheme();
@@ -31,6 +37,10 @@ export function ParentDashboardScreen() {
   const practiceStatus = useProgressStore(s => s.practiceStatus);
   const resetLearnerProgress = useProgressStore(s => s.resetLearnerProgress);
   const allAssignments = useAssignmentStore(s => s.assignments);
+  const completeAssignment = useAssignmentStore(s => s.completeAssignment);
+
+  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+
   const memorizationProgressByLearner = useMemo(() => {
     return Object.fromEntries(
       learners.map(learner => {
@@ -40,15 +50,21 @@ export function ParentDashboardScreen() {
     );
   }, [learners, practiceStatus]);
 
+  const activeAssignments: Assignment[] = useMemo(() => {
+    if (!activeLearner) return [];
+    return (allAssignments[activeLearner.id] ?? []).filter(
+      a => a.dueDate.slice(0, 10) <= today && a.status !== 'completed',
+    );
+  }, [allAssignments, activeLearner, today]);
+
   function deleteLearner(id: string) {
     Alert.alert(
       'Delete Learner',
-      'This will permanently delete this learner\'s profile and all their local progress, assignments, and notes. This cannot be undone.',
+      "This will permanently delete this learner's profile and all their local progress, assignments, and notes. This cannot be undone.",
       [
         {text: 'Cancel', style: 'cancel'},
         {
-          text: 'Delete',
-          style: 'destructive',
+          text: 'Delete', style: 'destructive',
           onPress: async () => {
             await deleteLearnerFromStore(id);
             await storageClearLearner(id);
@@ -64,18 +80,28 @@ export function ParentDashboardScreen() {
       `Reset all learning progress for ${name || 'this learner'}? Bookmarks and notes will be kept, but reading progress, memorization status, and practice sessions will be cleared.`,
       [
         {text: 'Cancel', style: 'cancel'},
-        {
-          text: 'Reset',
-          style: 'destructive',
-          onPress: () => resetLearnerProgress(id),
-        },
+        {text: 'Reset', style: 'destructive', onPress: () => resetLearnerProgress(id)},
       ],
     );
   }
 
+  function startAssignment(a: Assignment) {
+    (navigation as any).navigate('PracticeTab', {
+      screen: 'RepeatPractice',
+      params: {surahNumber: a.surahNumber, startAyah: a.startAyah, endAyah: a.endAyah},
+    });
+  }
+
+  async function markDone(a: Assignment) {
+    if (!activeLearner) return;
+    await completeAssignment(a.id, activeLearner.id);
+    recordCompletionEvent();
+    setTimeout(() => tryShowInterstitial(false), 800);
+  }
+
   return (
     <ScreenWrapper>
-      {/* Learner profiles */}
+      {/* ── Learner profiles ── */}
       <SectionHeader
         title="Learner Profiles"
         action={{label: '+ Add', onPress: () => navigation.navigate('CreateLearner')}}
@@ -92,7 +118,9 @@ export function ParentDashboardScreen() {
             const progress = progressData[learner.id];
             const isActive = learner.id === activeLearner?.id;
             const assignments = allAssignments[learner.id] ?? [];
-            const completedToday = assignments.filter(a => a.status === 'completed' && a.dueDate.slice(0, 10) === new Date().toISOString().slice(0, 10)).length;
+            const completedToday = assignments.filter(
+              a => a.status === 'completed' && a.dueDate.slice(0, 10) === today,
+            ).length;
 
             return (
               <AppCard
@@ -158,22 +186,106 @@ export function ParentDashboardScreen() {
         </>
       )}
 
-      {/* Assignments section */}
+      {/* ── Today's assignments ── */}
       <SectionHeader
-        title="Assignments"
-        action={{label: 'View all', onPress: () => navigation.navigate('Assignments')}}
+        title="Today's Assignments"
+        action={{label: '+ New', onPress: () => navigation.navigate('CreateAssignment', {learnerId: activeLearner?.id})}}
       />
-      <AppCard style={{marginBottom: Spacing[4]}}>
-        <AppButton
-          label="+ Create Assignment"
-          onPress={() => navigation.navigate('CreateAssignment', {learnerId: activeLearner?.id})}
-          size="sm"
-          disabled={!activeLearner}
-        />
-        {!activeLearner && <AppText variant="caption" style={{color: c.textMuted, marginTop: 6}}>Select a learner first</AppText>}
-      </AppCard>
 
-      {/* Parent notes */}
+      {!activeLearner ? (
+        <AppCard style={{marginBottom: Spacing[4]}}>
+          <AppText variant="caption" style={{color: c.textMuted}}>Select a learner above to see their assignments.</AppText>
+        </AppCard>
+      ) : activeAssignments.length === 0 ? (
+        <AppCard style={{marginBottom: Spacing[4], alignItems: 'center', paddingVertical: Spacing[5]}}>
+          <Text style={{fontSize: 32, marginBottom: Spacing[2]}}>✅</Text>
+          <AppText variant="body" weight="semibold" style={{marginBottom: 4}}>All clear for today!</AppText>
+          <AppText variant="caption" style={{color: c.textMuted, marginBottom: Spacing[3]}}>No pending assignments due today.</AppText>
+          <AppButton
+            label="+ Create Assignment"
+            onPress={() => navigation.navigate('CreateAssignment', {learnerId: activeLearner.id})}
+            size="sm"
+            variant="secondary"
+          />
+        </AppCard>
+      ) : (
+        <>
+          {activeAssignments.map(a => {
+            const surah = getSurah(a.surahNumber);
+            const isOverdue = a.dueDate.slice(0, 10) < today;
+            return (
+              <AppCard key={a.id} style={{marginBottom: Spacing[3]}}>
+                {/* Header row */}
+                <View style={{flexDirection: 'row', alignItems: 'flex-start', marginBottom: Spacing[2]}}>
+                  <View style={{
+                    width: 40, height: 40, borderRadius: Radii.md,
+                    backgroundColor: c.primary + '18',
+                    alignItems: 'center', justifyContent: 'center',
+                    marginRight: Spacing[2],
+                  }}>
+                    <Text style={{fontSize: 20}}>{TYPE_ICONS[a.type] ?? '📋'}</Text>
+                  </View>
+                  <View style={{flex: 1}}>
+                    <AppText variant="body" weight="semibold" numberOfLines={1} style={{marginBottom: 1}}>{a.title}</AppText>
+                    <AppText variant="caption" style={{color: c.textMuted}}>
+                      {surah?.transliteration ?? `Surah ${a.surahNumber}`} · Ayah {a.startAyah}–{a.endAyah} · {a.repeatCount ?? 3}× repeat
+                    </AppText>
+                  </View>
+                  {isOverdue && (
+                    <View style={{paddingHorizontal: 8, paddingVertical: 3, backgroundColor: c.error + '20', borderRadius: Radii.full, marginLeft: 4}}>
+                      <Text style={{color: c.error, fontSize: 10, fontWeight: '700'}}>OVERDUE</Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* Parent note */}
+                {a.parentNote ? (
+                  <View style={{backgroundColor: c.surfaceAlt, borderRadius: Radii.md, padding: Spacing[2], marginBottom: Spacing[2]}}>
+                    <AppText variant="caption" style={{color: c.textSecondary, fontStyle: 'italic'}} numberOfLines={2}>
+                      {a.parentNote}
+                    </AppText>
+                  </View>
+                ) : null}
+
+                {/* Actions */}
+                <View style={{flexDirection: 'row', gap: Spacing[2]}}>
+                  <TouchableOpacity
+                    onPress={() => startAssignment(a)}
+                    style={{
+                      flex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+                      backgroundColor: c.primary, borderRadius: Radii.md, paddingVertical: Spacing[2],
+                    }}
+                    accessibilityLabel="Start practice"
+                  >
+                    <Text style={{color: '#fff', fontSize: 14}}>▶</Text>
+                    <Text style={{color: '#fff', fontSize: 13, fontWeight: '700'}}>Start Practice</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => markDone(a)}
+                    style={{
+                      flex: 1, alignItems: 'center', justifyContent: 'center',
+                      backgroundColor: c.success + '20', borderRadius: Radii.md, paddingVertical: Spacing[2],
+                      borderWidth: 1, borderColor: c.success + '60',
+                    }}
+                    accessibilityLabel="Mark done"
+                  >
+                    <Text style={{color: c.success, fontSize: 13, fontWeight: '700'}}>✓ Done</Text>
+                  </TouchableOpacity>
+                </View>
+              </AppCard>
+            );
+          })}
+
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Assignments')}
+            style={{marginBottom: Spacing[4], alignItems: 'center'}}
+          >
+            <AppText variant="caption" style={{color: c.primary}}>View all assignments →</AppText>
+          </TouchableOpacity>
+        </>
+      )}
+
+      {/* ── Parent notes ── */}
       <SectionHeader title="Parent Notes" />
       <AppCard style={{marginBottom: Spacing[4]}}>
         <AppText variant="body" style={{color: c.textMuted}}>
@@ -182,7 +294,7 @@ export function ParentDashboardScreen() {
         <AppButton label="Open Notes" onPress={() => navigation.navigate('Notes')} variant="ghost" size="sm" style={{marginTop: Spacing[2]}} />
       </AppCard>
 
-      {/* Export */}
+      {/* ── Export ── */}
       <SectionHeader title="Export & Reports" />
       <AppCard>
         <AppText variant="caption" style={{color: c.textMuted, marginBottom: Spacing[2]}}>
@@ -195,7 +307,7 @@ export function ParentDashboardScreen() {
           size="sm"
         />
       </AppCard>
-      {/* Banner ad — bottom of Parent Dashboard, away from Quran content */}
+
       <BannerAdComponent />
     </ScreenWrapper>
   );

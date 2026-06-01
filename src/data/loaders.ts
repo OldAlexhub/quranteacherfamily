@@ -41,6 +41,7 @@ export async function getAyahsBySurahAsync(surahNumber: number): Promise<Ayah[]>
     ayahNumber: a.ayahNumber,
     globalAyahNumber: a.globalNumber,
     arabicText: a.arabicText,
+    transliteration: a.transliteration || undefined,
     englishMeaning: a.englishMeaning,
     juz: a.juz,
     page: a.page,

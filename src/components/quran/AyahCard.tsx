@@ -118,6 +118,16 @@ export function AyahCard({
         </Text>
       </View>
 
+      {/* Transliteration — always visible, helps non-Arabic readers follow along */}
+      {ayah.transliteration ? (
+        <View style={{paddingHorizontal: Spacing[4], paddingBottom: Spacing[2]}}>
+          <Text style={{color: c.textMuted, fontSize: 11, marginBottom: 2}}>How to read:</Text>
+          <Text style={{color: c.textSecondary, fontSize: englishFontSize * 0.9, lineHeight: englishFontSize * 1.5, fontStyle: 'italic'}}>
+            {ayah.transliteration}
+          </Text>
+        </View>
+      ) : null}
+
       {/* English meaning toggle */}
       {ayah.englishMeaning ? (
         <>

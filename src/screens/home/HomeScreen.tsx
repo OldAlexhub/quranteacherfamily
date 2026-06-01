@@ -216,7 +216,7 @@ export function HomeScreen() {
           {/* Browse surahs */}
           <SectionHeader
             title="Surahs"
-            action={{label: 'Browse all', onPress: () => (navigation as any).navigate('QuranTab')}}
+            action={{label: 'Browse all', onPress: () => (navigation as any).navigate('QuranTab', {screen: 'SurahList'})}}
           />
           {surahs.slice(0, 5).map(s => (
             <TouchableOpacity

@@ -1,6 +1,7 @@
 import React from 'react';
 import {Text, View} from 'react-native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import type {MainTabParamList} from '../types';
 import {useTheme} from '../theme';
 import {HomeStackNavigator} from './HomeStackNavigator';
@@ -20,6 +21,7 @@ function TabIcon({symbol, focused, color}: {symbol: string; focused: boolean; co
 export function MainTabNavigator() {
   const theme = useTheme();
   const c = theme.colors;
+  const insets = useSafeAreaInsets();
 
   return (
     <Tab.Navigator
@@ -28,8 +30,9 @@ export function MainTabNavigator() {
         tabBarStyle: {
           backgroundColor: c.surface,
           borderTopColor: c.border,
-          height: 60,
-          paddingBottom: 8,
+          height: 54 + insets.bottom,
+          paddingBottom: insets.bottom + 4,
+          paddingTop: 4,
         },
         tabBarActiveTintColor: c.primary,
         tabBarInactiveTintColor: c.textMuted,

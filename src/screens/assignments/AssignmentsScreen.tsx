@@ -13,6 +13,12 @@ import {EmptyState} from '../../components/common/EmptyState';
 import {useLearnerStore} from '../../store/useLearnerStore';
 import {useAssignmentStore} from '../../store/useAssignmentStore';
 import {tryShowInterstitial, recordCompletionEvent} from '../../ads/interstitialAdService';
+import {getSurah} from '../../data/loaders';
+
+const TYPE_ICONS: Record<string, string> = {
+  read_arabic: '📖', listen: '🔊', word_by_word: 'ا',
+  memorization_review: '⭐', free_reading: '🌙',
+};
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 
@@ -76,56 +82,91 @@ export function AssignmentsScreen() {
             action={{label: '+ Create Assignment', onPress: () => navigation.navigate('CreateAssignment', {learnerId: activeLearner.id})}}
           />
         }
-        renderItem={({item: a}) => (
-          <AppCard style={{marginBottom: Spacing[2]}}>
-            <View style={{flexDirection: 'row', alignItems: 'flex-start'}}>
-              <View style={{flex: 1}}>
-                <AppText variant="body" weight="semibold">{a.title}</AppText>
-                <AppText variant="caption" style={{color: c.textMuted}}>
-                  Surah {a.surahNumber}, Ayah {a.startAyah}–{a.endAyah} · Due {a.dueDate.slice(0, 10)}
-                </AppText>
-                {a.parentNote ? <AppText variant="caption" style={{color: c.textSecondary, marginTop: 2}}>{a.parentNote}</AppText> : null}
+        renderItem={({item: a}) => {
+          const surah = getSurah(a.surahNumber);
+          return (
+            <AppCard style={{marginBottom: Spacing[2]}}>
+              {/* Header */}
+              <View style={{flexDirection: 'row', alignItems: 'flex-start', marginBottom: Spacing[2]}}>
+                <View style={{
+                  width: 38, height: 38, borderRadius: Radii.md,
+                  backgroundColor: c.primary + '18',
+                  alignItems: 'center', justifyContent: 'center', marginRight: Spacing[2],
+                }}>
+                  <Text style={{fontSize: 18}}>{TYPE_ICONS[a.type] ?? '📋'}</Text>
+                </View>
+                <View style={{flex: 1}}>
+                  <AppText variant="body" weight="semibold">{a.title}</AppText>
+                  <AppText variant="caption" style={{color: c.textMuted}}>
+                    {surah?.transliteration ?? `Surah ${a.surahNumber}`} · Ayah {a.startAyah}–{a.endAyah} · Due {a.dueDate.slice(0, 10)}
+                  </AppText>
+                </View>
+                <View style={{paddingHorizontal: 8, paddingVertical: 3, backgroundColor: STATUS_COLORS[a.status] + '20', borderRadius: Radii.full, borderWidth: 1, borderColor: STATUS_COLORS[a.status] + '60', marginLeft: Spacing[2]}}>
+                  <Text style={{color: STATUS_COLORS[a.status], fontSize: 11}}>{a.status.replace('_', ' ')}</Text>
+                </View>
               </View>
-              <View style={{paddingHorizontal: 8, paddingVertical: 3, backgroundColor: STATUS_COLORS[a.status] + '20', borderRadius: Radii.full, borderWidth: 1, borderColor: STATUS_COLORS[a.status] + '60', marginLeft: Spacing[2]}}>
-                <Text style={{color: STATUS_COLORS[a.status], fontSize: 11}}>{a.status.replace('_', ' ')}</Text>
-              </View>
-            </View>
 
-            <View style={{flexDirection: 'row', gap: Spacing[2], marginTop: Spacing[2]}}>
+              {a.parentNote ? (
+                <View style={{backgroundColor: c.surfaceAlt, borderRadius: Radii.md, padding: Spacing[2], marginBottom: Spacing[2]}}>
+                  <AppText variant="caption" style={{color: c.textSecondary, fontStyle: 'italic'}}>{a.parentNote}</AppText>
+                </View>
+              ) : null}
+
+              {/* Start button — primary action */}
               {a.status !== 'completed' && (
                 <TouchableOpacity
-                  onPress={() => {
-                    completeAssignment(a.id, activeLearner.id);
-                    recordCompletionEvent();
-                    // Show interstitial at natural stopping point after completion
-                    setTimeout(() => tryShowInterstitial(false), 800);
+                  onPress={() => (navigation as any).navigate('PracticeTab', {
+                    screen: 'RepeatPractice',
+                    params: {surahNumber: a.surahNumber, startAyah: a.startAyah, endAyah: a.endAyah},
+                  })}
+                  style={{
+                    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    backgroundColor: c.primary, borderRadius: Radii.md,
+                    paddingVertical: Spacing[2], marginBottom: Spacing[2],
                   }}
-                  style={{flex: 1, backgroundColor: c.success + '20', borderRadius: Radii.md, padding: 7, alignItems: 'center', borderWidth: 1, borderColor: c.success + '60'}}
-                  accessibilityLabel="Mark complete"
+                  accessibilityLabel="Start practice"
                 >
-                  <Text style={{color: c.success, fontSize: 12}}>✓ Done</Text>
+                  <Text style={{color: '#fff', fontSize: 14}}>▶</Text>
+                  <Text style={{color: '#fff', fontSize: 13, fontWeight: '700'}}>Start Practice</Text>
                 </TouchableOpacity>
               )}
-              <TouchableOpacity
-                onPress={() => navigation.navigate('EditAssignment', {assignmentId: a.id})}
-                style={{flex: 1, backgroundColor: c.surfaceAlt, borderRadius: Radii.md, padding: 7, alignItems: 'center', borderWidth: 1, borderColor: c.border}}
-                accessibilityLabel="Edit assignment"
-              >
-                <Text style={{color: c.textSecondary, fontSize: 12}}>Edit</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => Alert.alert('Delete', 'Delete this assignment?', [
-                  {text: 'Cancel', style: 'cancel'},
-                  {text: 'Delete', style: 'destructive', onPress: () => deleteAssignment(a.id, activeLearner.id)},
-                ])}
-                style={{width: 36, backgroundColor: c.error + '15', borderRadius: Radii.md, padding: 7, alignItems: 'center', borderWidth: 1, borderColor: c.error + '40'}}
-                accessibilityLabel="Delete assignment"
-              >
-                <Text style={{color: c.error, fontSize: 14}}>✕</Text>
-              </TouchableOpacity>
-            </View>
-          </AppCard>
-        )}
+
+              {/* Secondary actions */}
+              <View style={{flexDirection: 'row', gap: Spacing[2]}}>
+                {a.status !== 'completed' && (
+                  <TouchableOpacity
+                    onPress={() => {
+                      completeAssignment(a.id, activeLearner.id);
+                      recordCompletionEvent();
+                      setTimeout(() => tryShowInterstitial(false), 800);
+                    }}
+                    style={{flex: 1, backgroundColor: c.success + '20', borderRadius: Radii.md, padding: 7, alignItems: 'center', borderWidth: 1, borderColor: c.success + '60'}}
+                    accessibilityLabel="Mark complete"
+                  >
+                    <Text style={{color: c.success, fontSize: 12, fontWeight: '600'}}>✓ Done</Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('EditAssignment', {assignmentId: a.id})}
+                  style={{flex: 1, backgroundColor: c.surfaceAlt, borderRadius: Radii.md, padding: 7, alignItems: 'center', borderWidth: 1, borderColor: c.border}}
+                  accessibilityLabel="Edit assignment"
+                >
+                  <Text style={{color: c.textSecondary, fontSize: 12}}>Edit</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => Alert.alert('Delete', 'Delete this assignment?', [
+                    {text: 'Cancel', style: 'cancel'},
+                    {text: 'Delete', style: 'destructive', onPress: () => deleteAssignment(a.id, activeLearner.id)},
+                  ])}
+                  style={{width: 36, backgroundColor: c.error + '15', borderRadius: Radii.md, padding: 7, alignItems: 'center', borderWidth: 1, borderColor: c.error + '40'}}
+                  accessibilityLabel="Delete assignment"
+                >
+                  <Text style={{color: c.error, fontSize: 14}}>✕</Text>
+                </TouchableOpacity>
+              </View>
+            </AppCard>
+          );
+        }}
       />
     </SafeAreaView>
   );

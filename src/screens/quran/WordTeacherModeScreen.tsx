@@ -25,9 +25,15 @@ export function WordTeacherModeScreen() {
   const ayah = getAyah(surahNumber, ayahNumber);
   const surah = getSurah(surahNumber);
 
-  const words = ayah?.words?.length
+  const BASMALA_WORD_COUNT = 4;
+  const rawWords = ayah?.words?.length
     ? ayah.words.map(word => word.arabicWord)
     : (ayah?.arabicText.trim().split(/\s+/) ?? []);
+  const basmalaOffset =
+    ayah?.ayahNumber === 1 && ayah?.surahNumber !== 1 && rawWords.length > BASMALA_WORD_COUNT
+      ? BASMALA_WORD_COUNT
+      : 0;
+  const words = basmalaOffset > 0 ? rawWords.slice(basmalaOffset) : rawWords;
   const initialWordIndex = Math.min(Math.max(wordIndex ?? 0, 0), Math.max(words.length - 1, 0));
   const [currentWordIdx, setCurrentWordIdx] = useState(initialWordIndex);
   const [showTransliteration, setShowTransliteration] = useState(false);
@@ -36,6 +42,9 @@ export function WordTeacherModeScreen() {
   const [checklist, setChecklist] = useState<Record<number, 'listened' | 'repeated' | 'needs_help' | 'done'>>({});
 
   const currentWord = words[currentWordIdx] ?? '';
+  const rawTranslitWords = ayah?.transliteration ? ayah.transliteration.trim().split(/\s+/) : [];
+  const translitWords = basmalaOffset > 0 ? rawTranslitWords.slice(basmalaOffset) : rawTranslitWords;
+  const currentWordTranslit = translitWords[currentWordIdx];
   const currentWordMeaning = ayah?.words?.[currentWordIdx]?.englishMeaning;
   const isLastWord = currentWordIdx >= words.length - 1;
   const isFirstWord = currentWordIdx === 0;
@@ -124,7 +133,7 @@ export function WordTeacherModeScreen() {
 
           {showTransliteration && (
             <AppText variant="body" style={{color: c.textMuted, marginBottom: Spacing[2]}}>
-              (Transliteration not available offline)
+              {currentWordTranslit ?? '(Transliteration not available)'}
             </AppText>
           )}
 

@@ -18,6 +18,7 @@ export interface Ayah {
   ayahNumber: number;
   globalAyahNumber: number;
   arabicText: string;
+  transliteration?: string;
   englishMeaning?: string;
   words?: WordToken[];
   juz?: number;
@@ -200,6 +201,7 @@ export interface UserPreference {
   selectedRecitationStyle: RecitationStyle;
   defaultRepeatCount: number;
   defaultDelaySeconds: number;
+  defaultPracticeMode: PracticeMode;
   reminderEnabled: boolean;
   reminderTime?: string;
   onboardingCompleted: boolean;

@@ -129,22 +129,32 @@ export function AyahDetailScreen() {
           </View>
         </AppCard>
 
-        {/* English meaning */}
-        {ayah.englishMeaning ? (
+        {/* Transliteration + English meaning */}
+        {(ayah.transliteration || ayah.englishMeaning) ? (
           <AppCard style={{marginBottom: Spacing[4]}}>
-            {!showMeaning ? (
-              <TouchableOpacity onPress={() => setShowMeaning(true)} accessibilityLabel="Show English meaning">
-                <AppText variant="body" style={{color: c.primary}}>Show English meaning</AppText>
-              </TouchableOpacity>
-            ) : (
-              <>
-                <AppText variant="caption" weight="semibold" style={{color: c.textMuted, marginBottom: Spacing[2]}}>English meaning (Pickthall)</AppText>
-                <AppText variant="body" english style={{lineHeight: 24, fontStyle: 'italic'}}>{ayah.englishMeaning}</AppText>
-                <TouchableOpacity onPress={() => setShowMeaning(false)} style={{marginTop: Spacing[2]}} accessibilityLabel="Hide meaning">
-                  <AppText variant="caption" style={{color: c.textMuted}}>Hide meaning</AppText>
+            {ayah.transliteration ? (
+              <View style={{marginBottom: ayah.englishMeaning ? Spacing[3] : 0}}>
+                <AppText variant="caption" weight="semibold" style={{color: c.textMuted, marginBottom: Spacing[1]}}>How to read (transliteration)</AppText>
+                <AppText variant="body" english style={{lineHeight: 24, fontStyle: 'italic', color: c.textSecondary}}>
+                  {ayah.transliteration}
+                </AppText>
+              </View>
+            ) : null}
+            {ayah.englishMeaning ? (
+              !showMeaning ? (
+                <TouchableOpacity onPress={() => setShowMeaning(true)} accessibilityLabel="Show English meaning">
+                  <AppText variant="body" style={{color: c.primary}}>Show English meaning</AppText>
                 </TouchableOpacity>
-              </>
-            )}
+              ) : (
+                <>
+                  <AppText variant="caption" weight="semibold" style={{color: c.textMuted, marginBottom: Spacing[2]}}>English meaning (Pickthall)</AppText>
+                  <AppText variant="body" english style={{lineHeight: 24, fontStyle: 'italic'}}>{ayah.englishMeaning}</AppText>
+                  <TouchableOpacity onPress={() => setShowMeaning(false)} style={{marginTop: Spacing[2]}} accessibilityLabel="Hide meaning">
+                    <AppText variant="caption" style={{color: c.textMuted}}>Hide meaning</AppText>
+                  </TouchableOpacity>
+                </>
+              )
+            ) : null}
           </AppCard>
         ) : null}
 

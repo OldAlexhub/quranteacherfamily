@@ -67,6 +67,7 @@ interface ApiSurahEdition {
   revelationType: string;
   numberOfAyahs: number;
   ayahs: ApiAyah[];
+  edition?: {identifier: string; language: string; name: string};
 }
 
 export interface SurahAyahs {
@@ -75,6 +76,7 @@ export interface SurahAyahs {
     ayahNumber: number;
     globalNumber: number;
     arabicText: string;
+    transliteration: string;
     englishMeaning: string;
     juz: number;
     page: number;
@@ -84,11 +86,12 @@ export interface SurahAyahs {
 // ─── Fetch surah (Arabic + English in one request) ───────────────────────────
 
 export async function fetchSurahAyahs(surahNumber: number): Promise<SurahAyahs> {
-  const cacheKey = `surah_${surahNumber}`;
+  // v2 cache key — includes transliteration; old v1 entries are intentionally abandoned
+  const cacheKey = `surah_v2_${surahNumber}`;
   const cached = await cacheGet<SurahAyahs>(cacheKey);
   if (cached) return cached;
 
-  const url = `${BASE_URL}/surah/${surahNumber}/editions/ar.uthmani,en.pickthall`;
+  const url = `${BASE_URL}/surah/${surahNumber}/editions/ar.uthmani,en.pickthall,en.transliteration`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`API error ${res.status} for surah ${surahNumber}`);
 
@@ -96,8 +99,11 @@ export async function fetchSurahAyahs(surahNumber: number): Promise<SurahAyahs> 
   if (json.code !== 200) throw new Error(`API returned code ${json.code}`);
 
   const editions: ApiSurahEdition[] = json.data;
-  const arabicEdition = editions.find(e => e.ayahs[0]?.text && isArabic(e.ayahs[0].text));
-  const englishEdition = editions.find(e => arabicEdition !== e);
+  const arabicEdition = editions.find(
+    e => e.edition?.identifier === 'ar.uthmani' || (e.ayahs[0]?.text && isArabic(e.ayahs[0].text)),
+  );
+  const englishEdition = editions.find(e => e.edition?.identifier === 'en.pickthall');
+  const translitEdition = editions.find(e => e.edition?.identifier === 'en.transliteration');
 
   if (!arabicEdition) throw new Error(`No Arabic edition in response for surah ${surahNumber}`);
 
@@ -107,6 +113,7 @@ export async function fetchSurahAyahs(surahNumber: number): Promise<SurahAyahs> 
       ayahNumber: a.numberInSurah,
       globalNumber: a.number,
       arabicText: a.text,
+      transliteration: translitEdition?.ayahs[idx]?.text ?? '',
       englishMeaning: englishEdition?.ayahs[idx]?.text ?? '',
       juz: a.juz,
       page: a.page,
