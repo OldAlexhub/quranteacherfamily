@@ -1,5 +1,6 @@
 import React, {useMemo} from 'react';
 import {View, TouchableOpacity, Text} from 'react-native';
+import {BannerAdComponent} from '../../ads/BannerAdComponent';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {PracticeStackParamList} from '../../types';
@@ -47,6 +48,7 @@ export function PracticeHomeScreen() {
   ];
 
   return (
+    <View style={{flex: 1, backgroundColor: c.background}}>
     <ScreenWrapper>
       <AppText variant="title" weight="bold" style={{marginBottom: Spacing[5], color: c.primary}}>Practice</AppText>
 
@@ -101,5 +103,7 @@ export function PracticeHomeScreen() {
         </AppCard>
       )}
     </ScreenWrapper>
+    <BannerAdComponent />
+    </View>
   );
 }

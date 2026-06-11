@@ -15,6 +15,7 @@ import {useProgressStore} from '../../store/useProgressStore';
 import {useBookmarkStore} from '../../store/useBookmarkStore';
 import {useLearnerStore} from '../../store/useLearnerStore';
 import {playAyah, stopAudio} from '../../audio/audioPlayer';
+import {BannerAdComponent} from '../../ads/BannerAdComponent';
 
 type Route = RouteProp<QuranStackParamList, 'AyahDetail'>;
 type Nav = NativeStackNavigationProp<QuranStackParamList>;
@@ -244,6 +245,7 @@ export function AyahDetailScreen() {
         </AppCard>
 
       </ScrollView>
+      <BannerAdComponent />
     </SafeAreaView>
   );
 }

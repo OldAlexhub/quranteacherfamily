@@ -11,6 +11,7 @@ import {loadSurahs} from '../../data/loaders';
 import {useProgressStore} from '../../store/useProgressStore';
 import {useLearnerStore} from '../../store/useLearnerStore';
 import type {PracticeStatusType, Surah} from '../../types';
+import {BannerAdComponent} from '../../ads/BannerAdComponent';
 
 const STATUS_COLORS: Record<PracticeStatusType, string> = {
   not_started: '#BDC3C7',
@@ -208,6 +209,7 @@ export function MemorizationTrackerScreen() {
           )}
         />
       )}
+      <BannerAdComponent />
     </SafeAreaView>
   );
 }

@@ -12,6 +12,7 @@ import {AppCard} from '../../components/common/AppCard';
 import {AppButton} from '../../components/common/AppButton';
 import {getAyahsBySurahAsync, getSurah, loadSurahs, setCachedAyahs} from '../../data/loaders';
 import {tryShowInterstitial, recordCompletionEvent} from '../../ads/interstitialAdService';
+import {BannerAdComponent} from '../../ads/BannerAdComponent';
 import {usePreferencesStore} from '../../store/usePreferencesStore';
 import {useProgressStore} from '../../store/useProgressStore';
 import {useLearnerStore} from '../../store/useLearnerStore';
@@ -363,6 +364,7 @@ export function RepeatPracticeScreen() {
         )}
 
       </ScrollView>
+      <BannerAdComponent />
     </SafeAreaView>
   );
 }

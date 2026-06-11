@@ -16,6 +16,7 @@ import {useBookmarkStore} from '../../store/useBookmarkStore';
 import {useLearnerStore} from '../../store/useLearnerStore';
 import {Event, useTrackPlayerEvents} from 'react-native-track-player';
 import {playAyah, pauseAudio, stopAudio} from '../../audio/audioPlayer';
+import {BannerAdComponent} from '../../ads/BannerAdComponent';
 
 type Route = RouteProp<QuranStackParamList, 'QuranReader'>;
 type Nav = NativeStackNavigationProp<QuranStackParamList>;
@@ -163,6 +164,8 @@ export function QuranReaderScreen() {
           )}
         />
       )}
+
+      <BannerAdComponent />
 
       {/* Audio controls — never show when loading or error */}
       {!loading && !error && (
