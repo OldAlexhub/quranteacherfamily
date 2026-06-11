@@ -10,6 +10,8 @@ import {useLearnerStore} from './src/store/useLearnerStore';
 import {useProgressStore} from './src/store/useProgressStore';
 import {useAssignmentStore} from './src/store/useAssignmentStore';
 import {useBookmarkStore} from './src/store/useBookmarkStore';
+import {useGamificationStore} from './src/store/useGamificationStore';
+import {useSessionStore} from './src/store/useSessionStore';
 import {initializePlayer} from './src/audio/audioPlayer';
 import {preloadInterstitial} from './src/ads/interstitialAdService';
 import {CHILD_SAFE_ADS, ENABLE_BANNER_ADS} from './src/config/adsConfig';
@@ -23,6 +25,8 @@ function AppContent() {
   const loadProgress = useProgressStore(s => s.loadProgress);
   const loadAssignments = useAssignmentStore(s => s.loadAssignments);
   const loadBookmarks = useBookmarkStore(s => s.loadBookmarks);
+  const loadGamification = useGamificationStore(s => s.loadGamification);
+  const loadSessionHistory = useSessionStore(s => s.loadSessionHistory);
 
   useEffect(() => {
     async function init() {
@@ -46,6 +50,8 @@ function AppContent() {
           loadProgress(),
           loadAssignments(),
           loadBookmarks(),
+          loadGamification(),
+          loadSessionHistory(),
         ]);
 
         initializePlayer().catch(() => {});

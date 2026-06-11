@@ -246,7 +246,7 @@ export type RootStackParamList = {
 export type MainTabParamList = {
   HomeTab: undefined;
   QuranTab: undefined;
-  PracticeTab: undefined;
+  MemorizeTab: undefined;
   ProgressTab: undefined;
   SettingsTab: undefined;
 };
@@ -276,6 +276,20 @@ export type HomeStackParamList = {
   Bookmarks: undefined;
   Notes: undefined;
   Search: undefined;
+  Achievements: {learnerId?: string};
+};
+
+export type MemorizeStackParamList = {
+  MemorizeHome: undefined;
+  MemorizeFlow: {
+    surahNumber: number;
+    startAyah: number;
+    endAyah: number;
+    sessionId?: string;
+  };
+  SessionSummary: {sessionId: string};
+  MemorizationTracker: {learnerId?: string};
+  RepeatPractice: {surahNumber?: number; startAyah?: number; endAyah?: number};
 };
 
 export type ProgressStackParamList = {
@@ -291,6 +305,75 @@ export type SettingsStackParamList = {
   Attribution: undefined;
   PrivacyPolicy: undefined;
 };
+
+// ─── Gamification ────────────────────────────────────────────────────────────
+
+export type XPEventType =
+  | 'ayah_listened'
+  | 'ayah_repeated'
+  | 'ayah_memorized'
+  | 'review_completed'
+  | 'session_completed'
+  | 'daily_goal_hit'
+  | 'streak_milestone'
+  | 'surah_completed';
+
+export interface GamificationProfile {
+  learnerId: string;
+  xp: number;
+  level: number;
+  streak: number;
+  longestStreak: number;
+  lastActiveDateStr: string;
+  earnedBadgeIds: string[];
+  totalSessions: number;
+  totalStudyMinutes: number;
+  totalAyahsMemorized: number;
+}
+
+export interface BadgeDefinition {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  xpReward: number;
+}
+
+export interface XPGainResult {
+  xpAdded: number;
+  totalXP: number;
+  leveledUp: boolean;
+  newLevel: number;
+  newBadgeIds: string[];
+}
+
+// ─── Session (Pomodoro) ──────────────────────────────────────────────────────
+
+export type SessionPhase = 'idle' | 'studying' | 'break' | 'completed';
+
+export interface ActiveSession {
+  id: string;
+  learnerId: string;
+  startedAt: string;
+  studyDurationMinutes: number;
+  breakDurationMinutes: number;
+  phase: SessionPhase;
+  elapsedStudySeconds: number;
+  elapsedBreakSeconds: number;
+  ayahsCompletedThisSession: number;
+  xpEarnedThisSession: number;
+  breakCount: number;
+}
+
+// ─── Daily Learning Goal ─────────────────────────────────────────────────────
+
+export interface DailyLearningGoal {
+  learnerId: string;
+  dateStr: string;
+  targetAyahs: number;
+  completedAyahs: number;
+  isCompleted: boolean;
+}
 
 // ─── Validation ──────────────────────────────────────────────────────────────
 

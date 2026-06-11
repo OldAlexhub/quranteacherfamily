@@ -7,7 +7,13 @@
  * - Min 3 minutes in session before first interstitial
  * - Max 1 per 3 completion events
  * - Never show if audio is playing
+ * - Never during active memorization steps
  * - All failures are silent
+ *
+ * NEW trigger points (call recordCompletionEvent + tryShowInterstitial):
+ * - session_break: When Pomodoro study timer runs out → show during break
+ * - session_completed: After SessionSummaryScreen primary CTA tap
+ * - daily_goal_hit: After daily goal completion celebration
  */
 
 import {InterstitialAd, AdEventType} from 'react-native-google-mobile-ads';
@@ -143,4 +149,32 @@ export function resetSession(): void {
   _session.shownCount = 0;
   _session.lastShownAt = 0;
   _session.completionEventsSinceLastAd = 0;
+}
+
+/**
+ * Show an ad when a study break starts (most natural pause moment).
+ * Call from BreakModal onShow or when phase transitions to 'break'.
+ */
+export function tryShowBreakAd(onClosed?: () => void): void {
+  recordCompletionEvent();
+  tryShowInterstitial(false, onClosed);
+}
+
+/**
+ * Show an ad after a full session completes.
+ * Call from SessionSummaryScreen before navigating away.
+ */
+export function tryShowSessionCompleteAd(onClosed?: () => void): void {
+  recordCompletionEvent();
+  recordCompletionEvent();
+  tryShowInterstitial(false, onClosed);
+}
+
+/**
+ * Show an ad when the daily goal is just hit.
+ * Call after updateDailyGoal returns justCompleted=true.
+ */
+export function tryShowDailyGoalAd(onClosed?: () => void): void {
+  recordCompletionEvent();
+  tryShowInterstitial(false, onClosed);
 }

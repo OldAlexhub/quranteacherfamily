@@ -30,12 +30,12 @@ interface ProgressState {
   recordListeningTime: (learnerId: string, seconds: number, style: RecitationStyle) => Promise<void>;
   getListeningProgress: (learnerId: string) => ListeningProgress | null;
 
-  updatePracticeStatus: (learnerId: string, surahNumber: number, ayahNumber: number, status: PracticeStatusType) => Promise<void>;
+  updatePracticeStatus: (learnerId: string, surahNumber: number, ayahNumber: number, status: PracticeStatusType, reviewDueAt?: string) => Promise<void>;
   bulkUpdatePracticeStatus: (learnerId: string, surahNumber: number, startAyah: number, endAyah: number, status: PracticeStatusType) => Promise<void>;
   getPracticeStatus: (learnerId: string, surahNumber: number, ayahNumber: number) => PracticeStatusType;
   getNeedsReviewList: (learnerId: string) => PracticeStatus[];
   getMemorizedList: (learnerId: string) => PracticeStatus[];
-  calculateMemorizationProgress: (learnerId: string) => {memorized: number; practicing: number; needsReview: number; notStarted: number; total: number};
+  calculateMemorizationProgress: (learnerId: string, surahNumber?: number) => {memorized: number; practicing: number; needsReview: number; notStarted: number; total: number};
 
   createPracticeSession: (learnerId: string, mode: PracticeMode, surahNumber: number, startAyah: number, endAyah: number, repeatCount: number) => Promise<PracticeSession>;
   completePracticeSession: (sessionId: string, learnerId: string, durationSeconds: number) => Promise<void>;
@@ -106,11 +106,19 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
 
   getListeningProgress: (learnerId) => get().listeningProgress[learnerId] ?? null,
 
-  updatePracticeStatus: async (learnerId, surahNumber, ayahNumber, status) => {
+  updatePracticeStatus: async (learnerId, surahNumber, ayahNumber, status, reviewDueAt) => {
     const {practiceStatus} = get();
     const learnerMap = {...(practiceStatus[learnerId] ?? {})};
     const key = `${surahNumber}_${ayahNumber}`;
-    learnerMap[key] = {id: key, learnerId, surahNumber, ayahNumber, status, updatedAt: new Date().toISOString()};
+    learnerMap[key] = {
+      id: key,
+      learnerId,
+      surahNumber,
+      ayahNumber,
+      status,
+      updatedAt: new Date().toISOString(),
+      reviewDueAt,
+    };
     const newMap = {...practiceStatus, [learnerId]: learnerMap};
     set({practiceStatus: newMap});
     await storageSet(KEYS.PRACTICE_STATUS, newMap);
@@ -144,9 +152,11 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     return Object.values(learnerMap).filter(s => s.status === 'memorized');
   },
 
-  calculateMemorizationProgress: (learnerId) => {
+  calculateMemorizationProgress: (learnerId, surahNumber) => {
     const learnerMap = get().practiceStatus[learnerId] ?? {};
-    const items = Object.values(learnerMap);
+    const items = Object.values(learnerMap).filter(
+      s => surahNumber === undefined || s.surahNumber === surahNumber,
+    );
     return {
       memorized: items.filter(s => s.status === 'memorized').length,
       practicing: items.filter(s => s.status === 'practicing').length,

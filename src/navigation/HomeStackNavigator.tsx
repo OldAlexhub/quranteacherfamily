@@ -13,6 +13,7 @@ import {EditAssignmentScreen} from '../screens/assignments/EditAssignmentScreen'
 import {BookmarksScreen} from '../screens/bookmarks/BookmarksScreen';
 import {NotesScreen} from '../screens/notes/NotesScreen';
 import {SearchScreen} from '../screens/search/SearchScreen';
+import {AchievementsScreen} from '../screens/achievements/AchievementsScreen';
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
 
@@ -33,6 +34,7 @@ export function HomeStackNavigator() {
       <Stack.Screen name="Bookmarks" component={BookmarksScreen} options={{title: 'Bookmarks'}} />
       <Stack.Screen name="Notes" component={NotesScreen} options={{title: 'Notes'}} />
       <Stack.Screen name="Search" component={SearchScreen} options={{title: 'Search Quran'}} />
+      <Stack.Screen name="Achievements" component={AchievementsScreen} options={{title: 'Achievements'}} />
     </Stack.Navigator>
   );
 }

@@ -6,7 +6,7 @@ import type {MainTabParamList} from '../types';
 import {useTheme} from '../theme';
 import {HomeStackNavigator} from './HomeStackNavigator';
 import {QuranStackNavigator} from './QuranStackNavigator';
-import {PracticeStackNavigator} from './PracticeStackNavigator';
+import {MemorizeStackNavigator} from './MemorizeStackNavigator';
 import {ProgressStackNavigator} from './ProgressStackNavigator';
 import {SettingsStackNavigator} from './SettingsStackNavigator';
 
@@ -50,9 +50,9 @@ export function MainTabNavigator() {
         options={{tabBarLabel: 'Quran', tabBarIcon: ({focused, color}) => <TabIcon symbol="📖" focused={focused} color={color} />}}
       />
       <Tab.Screen
-        name="PracticeTab"
-        component={PracticeStackNavigator}
-        options={{tabBarLabel: 'Practice', tabBarIcon: ({focused, color}) => <TabIcon symbol="🔄" focused={focused} color={color} />}}
+        name="MemorizeTab"
+        component={MemorizeStackNavigator}
+        options={{tabBarLabel: 'Memorize', tabBarIcon: ({focused, color}) => <TabIcon symbol="🧠" focused={focused} color={color} />}}
       />
       <Tab.Screen
         name="ProgressTab"
