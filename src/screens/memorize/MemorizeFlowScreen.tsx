@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import type {NativeStackNavigationProp, RouteProp} from '@react-navigation/native-stack';
+import {Event, useTrackPlayerEvents} from 'react-native-track-player';
 import {useTheme} from '../../theme';
 import {useLearnerStore} from '../../store/useLearnerStore';
 import {useProgressStore} from '../../store/useProgressStore';
@@ -105,6 +106,11 @@ export function MemorizeFlowScreen() {
   const [xpToastVisible, setXpToastVisible] = useState(false);
   const stepAnim = useRef(new Animated.Value(1)).current;
 
+  // Track real playback state so the play button reflects audio accurately
+  useTrackPlayerEvents([Event.PlaybackQueueEnded, Event.PlaybackError], () => {
+    setIsPlaying(false);
+  });
+
   // Load ayahs
   useEffect(() => {
     setLoading(true);
@@ -153,44 +159,32 @@ export function MemorizeFlowScreen() {
   const handlePlay = useCallback(async () => {
     if (!currentAyah) {return;}
     setIsPlaying(true);
-    try {
-      await playAyah(surahNumber, currentAyah.ayahNumber, recStyle, 1);
-    } finally {
-      setIsPlaying(false);
-    }
+    await playAyah(surahNumber, currentAyah.ayahNumber, recStyle, 1);
+    // isPlaying is reset by useTrackPlayerEvents when audio ends/errors
   }, [currentAyah, surahNumber, recStyle]);
 
-  const advanceStep = useCallback(() => {
-    const stepIdx = STEPS.indexOf(step);
-    const meta = STEP_META[step];
-
-    // Award XP for this step
-    if (meta.xpKey && learner) {
-      const result = addXP(learner.id, meta.xpKey as any);
-      showToast(result.xpAdded);
-      if (activeSession) {recordAyahCompleted(result.xpAdded);}
+  // Defined first so handleMarkMemorized and advanceStep can depend on it
+  const handleSessionComplete = useCallback(() => {
+    if (learner) {
+      incrementTotalSessions(learner.id);
+      addXP(learner.id, 'session_completed');
     }
-
-    if (step === 'from_memory') {
-      // Move to done
-      animateStep(() => setStep('done'));
-    } else if (step === 'done') {
-      handleMarkMemorized();
+    const summary = endSession();
+    if (summary && sessionId) {
+      navigation.replace('SessionSummary', {sessionId: summary.id});
     } else {
-      const nextStep = STEPS[stepIdx + 1];
-      animateStep(() => setStep(nextStep as Step));
-      if (nextStep === 'read_along' || nextStep === 'repeat') {
-        setTimeout(() => handlePlay(), 200);
-      }
+      navigation.goBack();
     }
-  }, [step, learner, addXP, showToast, activeSession, recordAyahCompleted, animateStep, handlePlay]);
+  }, [learner, incrementTotalSessions, addXP, endSession, navigation, sessionId]);
 
   const handleMarkMemorized = useCallback(() => {
     if (!currentAyah || !learner) {return;}
 
-    // Update practice status
-    const today = new Date();
-    const reviewDue = new Date(today);
+    // Show done state visually
+    animateStep(() => setStep('done'));
+
+    // Update practice status with spaced-repetition review date
+    const reviewDue = new Date();
     reviewDue.setDate(reviewDue.getDate() + 1);
     updatePracticeStatus(learner.id, surahNumber, currentAyah.ayahNumber, 'memorized', reviewDue.toISOString().split('T')[0]);
 
@@ -205,40 +199,51 @@ export function MemorizeFlowScreen() {
     }
     if (activeSession) {recordAyahCompleted(result.xpAdded);}
 
-    // Advance to next ayah or finish
-    if (!isLastAyah) {
-      setTimeout(() => {
+    // Auto-advance after a brief pause showing the done celebration
+    setTimeout(() => {
+      if (!isLastAyah) {
         animateStep(() => {
           setAyahIdx(i => i + 1);
           setStep('listen');
           setShowArabic(true);
         });
-      }, 800);
-    } else {
-      handleSessionComplete();
-    }
+      } else {
+        handleSessionComplete();
+      }
+    }, 1200);
   }, [
     currentAyah, learner, surahNumber, updatePracticeStatus, addXP,
     showToast, incrementTotalAyahsMemorized, checkAndUpdateStreak,
-    updateDailyGoal, activeSession, recordAyahCompleted, isLastAyah, animateStep,
+    updateDailyGoal, activeSession, recordAyahCompleted, isLastAyah,
+    animateStep, handleSessionComplete,
   ]);
+
+  const advanceStep = useCallback(() => {
+    const stepIdx = STEPS.indexOf(step);
+    const meta = STEP_META[step];
+
+    // Award XP for this step (listen / read_along / repeat)
+    if (meta.xpKey && learner) {
+      const result = addXP(learner.id, meta.xpKey as any);
+      showToast(result.xpAdded);
+      if (activeSession) {recordAyahCompleted(result.xpAdded);}
+    }
+
+    if (step === 'from_memory') {
+      // Marks memorized, shows done state, then auto-advances
+      handleMarkMemorized();
+    } else {
+      const nextStep = STEPS[stepIdx + 1];
+      animateStep(() => setStep(nextStep as Step));
+      if (nextStep === 'read_along' || nextStep === 'repeat') {
+        setTimeout(() => handlePlay(), 200);
+      }
+    }
+  }, [step, learner, addXP, showToast, activeSession, recordAyahCompleted, animateStep, handlePlay, handleMarkMemorized]);
 
   const handleTryAgain = useCallback(() => {
     animateStep(() => setStep('listen'));
   }, [animateStep]);
-
-  const handleSessionComplete = useCallback(() => {
-    if (learner) {
-      incrementTotalSessions(learner.id);
-      addXP(learner.id, 'session_completed');
-    }
-    const summary = endSession();
-    if (summary && sessionId) {
-      navigation.replace('SessionSummary', {sessionId: summary.id});
-    } else {
-      navigation.goBack();
-    }
-  }, [learner, incrementTotalSessions, addXP, endSession, navigation, sessionId]);
 
   function handleBreakContinue() {
     setShowBreakModal(false);

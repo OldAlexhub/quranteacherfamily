@@ -55,13 +55,10 @@ export function MemorizeHomeScreen() {
     );
   }, [learner?.id, practiceStatus]);
 
-  // Top surahs with progress
+  // All surahs with memorization progress
   const surahsWithProgress = useMemo(() => {
     if (!learner) {return [];}
-    return surahs
-      .slice(0, 20)
-      .map(s => ({surah: s, prog: calculateMemorizationProgress(learner.id, s.number)}))
-      .filter(x => x.prog.total > 0 || x.surah.number <= 5);
+    return surahs.map(s => ({surah: s, prog: calculateMemorizationProgress(learner.id, s.number)}));
   }, [learner?.id, surahs, calculateMemorizationProgress]);
 
   function handleStartSession(studyMins: number, breakMins: number, targetAyahs: number) {
@@ -162,7 +159,7 @@ export function MemorizeHomeScreen() {
         <Text style={[styles.sectionTitle, {color: colors.textPrimary}]}>
           📖 Quick Start
         </Text>
-        {surahsWithProgress.slice(0, 8).map(({surah, prog}) => {
+        {surahsWithProgress.map(({surah, prog}) => {
           const pct = prog.total > 0 ? prog.memorized / prog.total : 0;
           const isDone = prog.memorized >= surah.ayahCount;
           return (
