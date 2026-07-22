@@ -1,8 +1,8 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useMemo} from 'react';
 import {View, FlatList, Text, TouchableOpacity, ActivityIndicator} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {useRoute, useNavigation} from '@react-navigation/native';
-import type {NativeStackNavigationProp, RouteProp} from '@react-navigation/native-stack';
+import {useRoute, useNavigation, type RouteProp} from '@react-navigation/native';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {QuranStackParamList, Ayah} from '../../types';
 import {useTheme} from '../../theme';
 import {Spacing, Radii} from '../../theme/spacing';
@@ -26,7 +26,7 @@ export function QuranReaderScreen() {
   const c = theme.colors;
   const route = useRoute<Route>();
   const navigation = useNavigation<Nav>();
-  const {surahNumber, startAyah} = route.params;
+  const {surahNumber, startAyah, endAyah, assignmentTitle, launchKey} = route.params;
 
   const preferences = usePreferencesStore(s => s.preferences);
   const activeLearner = useLearnerStore(s => s.getActiveLearner());
@@ -43,24 +43,47 @@ export function QuranReaderScreen() {
   const [playingAyah, setPlayingAyah] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showEnglish, setShowEnglish] = useState(!preferences.englishMeaningDefaultHidden);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const surah = getSurah(surahNumber);
+  const rangeStart = Math.max(1, startAyah ?? 1);
+  const rangeEnd = endAyah === undefined
+    ? undefined
+    : Math.max(rangeStart, Math.min(endAyah, surah?.ayahCount ?? endAyah));
+  const visibleAyahs = useMemo(
+    () => ayahs.filter(a =>
+      (startAyah === undefined || a.ayahNumber >= rangeStart) &&
+      (rangeEnd === undefined || a.ayahNumber <= rangeEnd),
+    ),
+    [ayahs, rangeEnd, rangeStart, startAyah],
+  );
 
   useEffect(() => {
+    let cancelled = false;
+    setPlayingAyah(null);
+    setIsPlaying(false);
     setLoading(true);
     setError(null);
     getAyahsBySurahAsync(surahNumber)
       .then(data => {
+        if (cancelled) return;
         setCachedAyahs(surahNumber, data);
         setAyahs(data);
         if (activeLearner) {
           saveLastRead(activeLearner.id, surahNumber, startAyah ?? 1);
         }
       })
-      .catch(() => setError('Could not load this surah. Check your internet connection.'))
-      .finally(() => setLoading(false));
-    return () => { stopAudio(); };
-  }, [surahNumber]);
+      .catch(() => {
+        if (!cancelled) setError('Could not load this surah. Check your internet connection.');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+      stopAudio();
+    };
+  }, [activeLearner, endAyah, launchKey, reloadKey, saveLastRead, startAyah, surahNumber]);
 
   useEffect(() => {
     navigation.setOptions({
@@ -75,7 +98,7 @@ export function QuranReaderScreen() {
         </TouchableOpacity>
       ),
     });
-  }, [surah, showEnglish, c]);
+  }, [c, navigation, showEnglish, surah, surahNumber]);
 
   // Reset playing state automatically when the audio queue finishes
   useTrackPlayerEvents([Event.PlaybackQueueEnded, Event.PlaybackError], () => {
@@ -106,13 +129,15 @@ export function QuranReaderScreen() {
   }
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: c.background}} edges={['bottom']}>
+    <SafeAreaView style={{flex: 1, backgroundColor: c.background}} edges={['left', 'right']}>
       {/* Surah header */}
       {surah && (
         <View style={{backgroundColor: c.primary, paddingVertical: Spacing[3], alignItems: 'center'}}>
           <Text style={{color: '#fff', fontSize: 22, fontWeight: '500'}}>{surah.arabicName}</Text>
           <AppText variant="caption" style={{color: 'rgba(255,255,255,0.75)'}}>
-            {surah.transliteration} · {surah.ayahCount} Ayahs · {surah.revelationType}
+            {rangeEnd === undefined
+              ? `${surah.transliteration} · ${surah.ayahCount} Ayahs · ${surah.revelationType}`
+              : `${assignmentTitle ?? 'Reading assignment'} · Ayahs ${rangeStart}–${rangeEnd}`}
           </AppText>
         </View>
       )}
@@ -128,14 +153,7 @@ export function QuranReaderScreen() {
           <AppText variant="heading" center>Could not load surah</AppText>
           <AppText variant="body" center style={{color: c.textMuted, marginTop: Spacing[2]}}>{error}</AppText>
           <TouchableOpacity
-            onPress={() => {
-              setLoading(true);
-              setError(null);
-              getAyahsBySurahAsync(surahNumber)
-                .then(data => { setCachedAyahs(surahNumber, data); setAyahs(data); })
-                .catch(() => setError('Could not load. Check your internet connection.'))
-                .finally(() => setLoading(false));
-            }}
+            onPress={() => setReloadKey(value => value + 1)}
             style={{marginTop: Spacing[4], backgroundColor: c.primary, borderRadius: Radii.md, paddingHorizontal: 20, paddingVertical: 12}}
             accessibilityLabel="Retry"
           >
@@ -144,7 +162,7 @@ export function QuranReaderScreen() {
         </View>
       ) : (
         <FlatList
-          data={ayahs}
+          data={visibleAyahs}
           keyExtractor={a => String(a.ayahNumber)}
           contentContainerStyle={{padding: Spacing[4], paddingBottom: 100}}
           showsVerticalScrollIndicator={false}
@@ -172,14 +190,15 @@ export function QuranReaderScreen() {
         <AudioControls
           isPlaying={isPlaying}
           repeatCount={preferences.defaultRepeatCount}
-          onPlay={() => handlePlayAyah(playingAyah ?? (startAyah ?? 1))}
+          onPlay={() => handlePlayAyah(playingAyah ?? rangeStart)}
           onPause={() => { pauseAudio(); setIsPlaying(false); }}
           onStop={() => { stopAudio(); setIsPlaying(false); setPlayingAyah(null); }}
           onNext={() => {
-            if (playingAyah && surah && playingAyah < surah.ayahCount) handlePlayAyah(playingAyah + 1);
+            const lastAyah = rangeEnd ?? surah?.ayahCount;
+            if (playingAyah && lastAyah && playingAyah < lastAyah) handlePlayAyah(playingAyah + 1);
           }}
           onPrevious={() => {
-            if (playingAyah && playingAyah > 1) handlePlayAyah(playingAyah - 1);
+            if (playingAyah && playingAyah > rangeStart) handlePlayAyah(playingAyah - 1);
           }}
           reciterLabel={preferences.selectedRecitationStyle === 'muallim' ? 'Muallim — Al-Husary' : 'Mujawwad — Al-Husary'}
         />

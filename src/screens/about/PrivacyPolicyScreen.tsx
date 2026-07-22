@@ -21,7 +21,7 @@ export function PrivacyPolicyScreen() {
   const theme = useTheme();
   const c = theme.colors;
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: c.background}} edges={['bottom']}>
+    <SafeAreaView style={{flex: 1, backgroundColor: c.background}} edges={['left', 'right']}>
       <ScrollView contentContainerStyle={{padding: Spacing[4], paddingBottom: 40}} showsVerticalScrollIndicator={false}>
         <AppText variant="heading" weight="bold" style={{marginBottom: Spacing[1]}}>Privacy Policy</AppText>
         <AppText variant="caption" style={{color: c.textMuted, marginBottom: Spacing[4]}}>Quran Teacher Family — by Old Alex Hub</AppText>

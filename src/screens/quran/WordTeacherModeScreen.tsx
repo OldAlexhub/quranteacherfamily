@@ -1,29 +1,52 @@
 import React, {useState, useEffect} from 'react';
-import {View, Text, ScrollView, TouchableOpacity, Switch} from 'react-native';
+import {ActivityIndicator, View, Text, ScrollView, TouchableOpacity, Switch} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {useRoute} from '@react-navigation/native';
-import type {RouteProp} from '@react-navigation/native-stack';
-import type {QuranStackParamList} from '../../types';
+import {useNavigation, useRoute, type RouteProp} from '@react-navigation/native';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import type {Ayah, QuranStackParamList} from '../../types';
 import {useTheme} from '../../theme';
 import {Spacing, Radii} from '../../theme/spacing';
 import {AppText} from '../../components/common/AppText';
 import {AppCard} from '../../components/common/AppCard';
 import {AppButton} from '../../components/common/AppButton';
-import {getAyah, getSurah} from '../../data/loaders';
+import {
+  getAyah,
+  getAyahsBySurahAsync,
+  getSurah,
+  setCachedAyahs,
+} from '../../data/loaders';
 import {usePreferencesStore} from '../../store/usePreferencesStore';
 import {playAyah, stopAudio} from '../../audio/audioPlayer';
 
 type Route = RouteProp<QuranStackParamList, 'WordTeacherMode'>;
+type Nav = NativeStackNavigationProp<QuranStackParamList, 'WordTeacherMode'>;
 
 export function WordTeacherModeScreen() {
   const theme = useTheme();
   const c = theme.colors;
   const route = useRoute<Route>();
-  const {surahNumber, ayahNumber, wordIndex} = route.params;
+  const navigation = useNavigation<Nav>();
+  const {
+    surahNumber,
+    ayahNumber,
+    endAyah,
+    wordIndex,
+    repeatCount: assignedRepeatCount,
+    assignmentTitle,
+    launchKey,
+  } = route.params;
 
   const preferences = usePreferencesStore(s => s.preferences);
-  const ayah = getAyah(surahNumber, ayahNumber);
   const surah = getSurah(surahNumber);
+  const [currentAyahNumber, setCurrentAyahNumber] = useState(ayahNumber);
+  const [loadedAyahs, setLoadedAyahs] = useState<Ayah[]>([]);
+  const [loadedSurahNumber, setLoadedSurahNumber] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const ayah = loadedAyahs.find(
+    item => item.surahNumber === surahNumber && item.ayahNumber === currentAyahNumber,
+  ) ?? getAyah(surahNumber, currentAyahNumber);
 
   const BASMALA_WORD_COUNT = 4;
   const rawWords = ayah?.words?.length
@@ -38,8 +61,14 @@ export function WordTeacherModeScreen() {
   const [currentWordIdx, setCurrentWordIdx] = useState(initialWordIndex);
   const [showTransliteration, setShowTransliteration] = useState(false);
   const [showWordMeaning, setShowWordMeaning] = useState(false);
-  const [repeatCount, setRepeatCount] = useState(preferences.defaultRepeatCount);
+  const [repeatCount, setRepeatCount] = useState(
+    Math.max(1, assignedRepeatCount ?? preferences.defaultRepeatCount),
+  );
   const [checklist, setChecklist] = useState<Record<number, 'listened' | 'repeated' | 'needs_help' | 'done'>>({});
+  const assignmentEndAyah = Math.max(
+    ayahNumber,
+    Math.min(endAyah ?? ayahNumber, surah?.ayahCount ?? endAyah ?? ayahNumber),
+  );
 
   const currentWord = words[currentWordIdx] ?? '';
   const rawTranslitWords = ayah?.transliteration ? ayah.transliteration.trim().split(/\s+/) : [];
@@ -48,34 +77,113 @@ export function WordTeacherModeScreen() {
   const currentWordMeaning = ayah?.words?.[currentWordIdx]?.englishMeaning;
   const isLastWord = currentWordIdx >= words.length - 1;
   const isFirstWord = currentWordIdx === 0;
+  const hasNextAssignedAyah = currentAyahNumber < assignmentEndAyah;
 
   function toggleCheck(idx: number, status: 'listened' | 'repeated' | 'needs_help' | 'done') {
     setChecklist(prev => ({...prev, [idx]: prev[idx] === status ? undefined as any : status}));
   }
 
-  async function playCurrentWord() {
-    await playAyah(surahNumber, ayahNumber, preferences.selectedRecitationStyle);
+  async function playCurrentAyah() {
+    await playAyah(surahNumber, currentAyahNumber, preferences.selectedRecitationStyle);
   }
 
   useEffect(() => {
-    setCurrentWordIdx(Math.min(Math.max(wordIndex ?? 0, 0), Math.max(words.length - 1, 0)));
-  }, [wordIndex, words.length]);
+    let cancelled = false;
+    stopAudio();
+    setLoading(true);
+    setLoadError(null);
+    getAyahsBySurahAsync(surahNumber)
+      .then(data => {
+        if (cancelled) return;
+        setCachedAyahs(surahNumber, data);
+        setLoadedAyahs(data);
+        setLoadedSurahNumber(surahNumber);
+      })
+      .catch(() => {
+        if (!cancelled) setLoadError('Could not load ayah text for word practice.');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+      stopAudio();
+    };
+  }, [launchKey, reloadKey, surahNumber]);
+
+  useEffect(() => {
+    setCurrentAyahNumber(ayahNumber);
+    setRepeatCount(Math.max(1, assignedRepeatCount ?? preferences.defaultRepeatCount));
+    setChecklist({});
+  }, [assignedRepeatCount, ayahNumber, launchKey, preferences.defaultRepeatCount, surahNumber]);
+
+  useEffect(() => {
+    const initialIndex = currentAyahNumber === ayahNumber ? wordIndex ?? 0 : 0;
+    setCurrentWordIdx(Math.min(Math.max(initialIndex, 0), Math.max(words.length - 1, 0)));
+    setChecklist({});
+  }, [ayahNumber, currentAyahNumber, wordIndex, words.length]);
+
+  function handleNext() {
+    if (!isLastWord) {
+      setCurrentWordIdx(i => i + 1);
+    } else if (hasNextAssignedAyah) {
+      setCurrentAyahNumber(value => value + 1);
+    } else {
+      navigation.goBack();
+    }
+  }
+
+  if (loadError) {
+    return (
+      <SafeAreaView
+        style={{flex: 1, backgroundColor: c.background, alignItems: 'center', justifyContent: 'center', padding: Spacing[6]}}
+        edges={['left', 'right']}>
+        <AppText variant="body" center style={{color: c.error, marginBottom: Spacing[3]}}>
+          {loadError}
+        </AppText>
+        <AppButton label="Retry" onPress={() => setReloadKey(value => value + 1)} />
+      </SafeAreaView>
+    );
+  }
+
+  if (loading || loadedSurahNumber !== surahNumber) {
+    return (
+      <SafeAreaView
+        style={{flex: 1, backgroundColor: c.background, alignItems: 'center', justifyContent: 'center'}}
+        edges={['left', 'right']}>
+        <ActivityIndicator size="large" color={c.primary} />
+        <AppText variant="caption" style={{color: c.textMuted, marginTop: Spacing[3]}}>
+          Loading word practice…
+        </AppText>
+      </SafeAreaView>
+    );
+  }
 
   if (!ayah || !surah) {
     return (
-      <SafeAreaView style={{flex: 1, backgroundColor: c.background, alignItems: 'center', justifyContent: 'center'}}>
+      <SafeAreaView
+        style={{flex: 1, backgroundColor: c.background, alignItems: 'center', justifyContent: 'center'}}
+        edges={['left', 'right']}>
         <AppText variant="body" style={{color: c.textMuted}}>Ayah not found</AppText>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: c.background}} edges={['bottom']}>
+    <SafeAreaView style={{flex: 1, backgroundColor: c.background}} edges={['left', 'right']}>
       <ScrollView contentContainerStyle={{padding: Spacing[4], paddingBottom: 40}} showsVerticalScrollIndicator={false}>
 
         {/* Surah info */}
         <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: Spacing[3]}}>
-          <AppText variant="caption" style={{color: c.textMuted}}>{surah.transliteration} · Ayah {ayahNumber}</AppText>
+          <View>
+            <AppText variant="caption" style={{color: c.textMuted}}>
+              {surah.transliteration} · Ayah {currentAyahNumber}
+              {assignmentEndAyah > ayahNumber ? ` of ${ayahNumber}–${assignmentEndAyah}` : ''}
+            </AppText>
+            {assignmentTitle ? (
+              <AppText variant="caption" style={{color: c.primary, marginTop: 2}}>{assignmentTitle}</AppText>
+            ) : null}
+          </View>
         </View>
 
         {/* Full ayah with highlighting */}
@@ -114,22 +222,27 @@ export function WordTeacherModeScreen() {
           </Text>
 
           <View style={{flexDirection: 'row', gap: Spacing[3], marginBottom: Spacing[3]}}>
-            <TouchableOpacity onPress={playCurrentWord} style={{backgroundColor: c.primary, borderRadius: Radii.full, width: 52, height: 52, alignItems: 'center', justifyContent: 'center'}} accessibilityLabel="Play word">
+            <TouchableOpacity onPress={playCurrentAyah} style={{backgroundColor: c.primary, borderRadius: Radii.full, width: 52, height: 52, alignItems: 'center', justifyContent: 'center'}} accessibilityLabel="Play full ayah">
               <Text style={{color: '#fff', fontSize: 24}}>▶</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={async () => {
                 for (let i = 0; i < repeatCount; i++) {
-                  await playCurrentWord();
-                  await new Promise(r => setTimeout(r, (preferences.defaultDelaySeconds + 2) * 1000));
+                  await playCurrentAyah();
+                  await new Promise<void>(resolve =>
+                    setTimeout(() => resolve(), (preferences.defaultDelaySeconds + 2) * 1000),
+                  );
                 }
               }}
               style={{backgroundColor: c.surfaceAlt, borderRadius: Radii.full, paddingHorizontal: 16, height: 52, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: c.border}}
-              accessibilityLabel={`Repeat word ${repeatCount} times`}
+              accessibilityLabel={`Repeat full ayah ${repeatCount} times`}
             >
               <Text style={{color: c.textSecondary, fontSize: 16}}>↻ {repeatCount}×</Text>
             </TouchableOpacity>
           </View>
+          <AppText variant="caption" center style={{color: c.textMuted, marginBottom: Spacing[3]}}>
+            Audio plays the full ayah while you follow the selected word.
+          </AppText>
 
           {showTransliteration && (
             <AppText variant="body" style={{color: c.textMuted, marginBottom: Spacing[2]}}>
@@ -201,7 +314,17 @@ export function WordTeacherModeScreen() {
         {/* Navigation */}
         <View style={{flexDirection: 'row', gap: Spacing[3]}}>
           <AppButton label="← Previous" onPress={() => !isFirstWord && setCurrentWordIdx(i => i - 1)} disabled={isFirstWord} variant="secondary" style={{flex: 1}} />
-          <AppButton label={isLastWord ? 'Done ✓' : 'Next →'} onPress={() => !isLastWord && setCurrentWordIdx(i => i + 1)} disabled={isLastWord} style={{flex: 2}} />
+          <AppButton
+            label={
+              !isLastWord
+                ? 'Next →'
+                : hasNextAssignedAyah
+                  ? `Next Ayah (${currentAyahNumber + 1}) →`
+                  : assignmentTitle ? 'Assignment Complete ✓' : 'Done ✓'
+            }
+            onPress={handleNext}
+            style={{flex: 2}}
+          />
         </View>
 
       </ScrollView>

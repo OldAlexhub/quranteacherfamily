@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ScrollView,
 } from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTheme} from '../../theme';
 import {AppButton} from '../common/AppButton';
 
@@ -22,6 +23,7 @@ const AYAH_OPTIONS = [3, 5, 10, 15];
 
 export function SessionSetupModal({visible, onClose, onStart}: Props) {
   const {colors} = useTheme();
+  const insets = useSafeAreaInsets();
   const [studyMins, setStudyMins] = useState(15);
   const [breakMins, setBreakMins] = useState(5);
   const [targetAyahs, setTargetAyahs] = useState(5);
@@ -31,13 +33,25 @@ export function SessionSetupModal({visible, onClose, onStart}: Props) {
       visible={visible}
       transparent
       animationType="slide"
+      statusBarTranslucent
+      navigationBarTranslucent
       onRequestClose={onClose}>
       <View style={[styles.overlay, {backgroundColor: colors.modalBackground}]}>
-        <View style={[styles.sheet, {backgroundColor: colors.surface, borderColor: colors.border}]}>
+        <View
+          style={[
+            styles.sheet,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              marginLeft: insets.left,
+              marginRight: insets.right,
+              paddingBottom: Math.max(24, insets.bottom + 16),
+            },
+          ]}>
           <View style={styles.handle} />
 
           <Text style={[styles.title, {color: colors.textPrimary}]}>
-            🎯 Set Up Your Session
+            Set Your Practice Goal
           </Text>
           <Text style={[styles.subtitle, {color: colors.textMuted}]}>
             Short, focused sessions build strong habits
@@ -45,7 +59,7 @@ export function SessionSetupModal({visible, onClose, onStart}: Props) {
 
           {/* Study duration */}
           <Text style={[styles.sectionLabel, {color: colors.textSecondary}]}>
-            Study Time
+            Practice time
           </Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.optionRow}>
             {STUDY_OPTIONS.map(min => (
@@ -73,7 +87,7 @@ export function SessionSetupModal({visible, onClose, onStart}: Props) {
 
           {/* Break duration */}
           <Text style={[styles.sectionLabel, {color: colors.textSecondary}]}>
-            Break Time
+            Break after
           </Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.optionRow}>
             {BREAK_OPTIONS.map(min => (
@@ -101,7 +115,7 @@ export function SessionSetupModal({visible, onClose, onStart}: Props) {
 
           {/* Target ayahs */}
           <Text style={[styles.sectionLabel, {color: colors.textSecondary}]}>
-            Today's Ayah Goal
+            Ayah goal
           </Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.optionRow}>
             {AYAH_OPTIONS.map(n => (
@@ -135,7 +149,7 @@ export function SessionSetupModal({visible, onClose, onStart}: Props) {
           </View>
 
           <AppButton
-            label="Start Session ▶"
+            label="Begin Practice"
             variant="primary"
             size="lg"
             fullWidth
@@ -157,7 +171,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     borderWidth: 1,
     paddingHorizontal: 20,
-    paddingBottom: 36,
     paddingTop: 16,
     gap: 12,
   },

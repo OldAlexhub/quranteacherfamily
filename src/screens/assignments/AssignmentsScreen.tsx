@@ -14,11 +14,12 @@ import {useLearnerStore} from '../../store/useLearnerStore';
 import {useAssignmentStore} from '../../store/useAssignmentStore';
 import {tryShowInterstitial, recordCompletionEvent} from '../../ads/interstitialAdService';
 import {getSurah} from '../../data/loaders';
-
-const TYPE_ICONS: Record<string, string> = {
-  read_arabic: '📖', listen: '🔊', word_by_word: 'ا',
-  memorization_review: '⭐', free_reading: '🌙',
-};
+import {
+  ASSIGNMENT_ICONS,
+  getAssignmentActionLabel,
+  getAssignmentDetail,
+  launchAssignment,
+} from '../../navigation/assignmentNavigation';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 
@@ -41,7 +42,7 @@ export function AssignmentsScreen() {
 
   if (!activeLearner) {
     return (
-      <SafeAreaView style={{flex: 1, backgroundColor: c.background}}>
+      <SafeAreaView style={{flex: 1, backgroundColor: c.background}} edges={['left', 'right']}>
         <EmptyState title="No learner selected" subtitle="Select a learner to view assignments" />
       </SafeAreaView>
     );
@@ -51,7 +52,7 @@ export function AssignmentsScreen() {
   const shown = filter === 'all' ? all : all.filter(a => a.status === filter);
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: c.background}} edges={['bottom']}>
+    <SafeAreaView style={{flex: 1, backgroundColor: c.background}} edges={['left', 'right']}>
       <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: Spacing[4], paddingTop: Spacing[3]}}>
         <AppText variant="body" style={{color: c.textMuted}}>{all.length} total</AppText>
         <AppButton label="+ New" onPress={() => navigation.navigate('CreateAssignment', {learnerId: activeLearner.id})} size="sm" />
@@ -93,12 +94,12 @@ export function AssignmentsScreen() {
                   backgroundColor: c.primary + '18',
                   alignItems: 'center', justifyContent: 'center', marginRight: Spacing[2],
                 }}>
-                  <Text style={{fontSize: 18}}>{TYPE_ICONS[a.type] ?? '📋'}</Text>
+                  <Text style={{fontSize: 18}}>{ASSIGNMENT_ICONS[a.type]}</Text>
                 </View>
                 <View style={{flex: 1}}>
                   <AppText variant="body" weight="semibold">{a.title}</AppText>
                   <AppText variant="caption" style={{color: c.textMuted}}>
-                    {surah?.transliteration ?? `Surah ${a.surahNumber}`} · Ayah {a.startAyah}–{a.endAyah} · Due {a.dueDate.slice(0, 10)}
+                    {getAssignmentDetail(a, surah?.transliteration ?? `Surah ${a.surahNumber}`, true)}
                   </AppText>
                 </View>
                 <View style={{paddingHorizontal: 8, paddingVertical: 3, backgroundColor: STATUS_COLORS[a.status] + '20', borderRadius: Radii.full, borderWidth: 1, borderColor: STATUS_COLORS[a.status] + '60', marginLeft: Spacing[2]}}>
@@ -115,19 +116,18 @@ export function AssignmentsScreen() {
               {/* Start button — primary action */}
               {a.status !== 'completed' && (
                 <TouchableOpacity
-                  onPress={() => (navigation as any).navigate('PracticeTab', {
-                    screen: 'RepeatPractice',
-                    params: {surahNumber: a.surahNumber, startAyah: a.startAyah, endAyah: a.endAyah},
-                  })}
+                  onPress={() => launchAssignment(navigation, a)}
                   style={{
                     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
                     backgroundColor: c.primary, borderRadius: Radii.md,
                     paddingVertical: Spacing[2], marginBottom: Spacing[2],
                   }}
-                  accessibilityLabel="Start practice"
+                  accessibilityLabel={getAssignmentActionLabel(a.type)}
                 >
                   <Text style={{color: '#fff', fontSize: 14}}>▶</Text>
-                  <Text style={{color: '#fff', fontSize: 13, fontWeight: '700'}}>Start Practice</Text>
+                  <Text style={{color: '#fff', fontSize: 13, fontWeight: '700'}}>
+                    {getAssignmentActionLabel(a.type)}
+                  </Text>
                 </TouchableOpacity>
               )}
 

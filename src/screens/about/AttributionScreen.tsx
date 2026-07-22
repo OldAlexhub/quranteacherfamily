@@ -1,5 +1,5 @@
 import React from 'react';
-import {ScrollView, View, Text} from 'react-native';
+import {ScrollView} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {AppText} from '../../components/common/AppText';
 import {AppCard} from '../../components/common/AppCard';
@@ -12,7 +12,7 @@ export function AttributionScreen() {
   const c = theme.colors;
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: c.background}} edges={['bottom']}>
+    <SafeAreaView style={{flex: 1, backgroundColor: c.background}} edges={['left', 'right']}>
       <ScrollView contentContainerStyle={{padding: Spacing[4], paddingBottom: 40}} showsVerticalScrollIndicator={false}>
 
         <SectionHeader title="Content Attribution" />

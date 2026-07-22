@@ -42,10 +42,5 @@
         tools:replace="android:value"
         android:value="true" />
 
-      <service
-        android:name="com.doublesymmetry.trackplayer.service.HeadlessJsMediaService"
-        android:foregroundServiceType="mediaPlayback"
-        android:exported="false" />
-
     </application>
 </manifest>

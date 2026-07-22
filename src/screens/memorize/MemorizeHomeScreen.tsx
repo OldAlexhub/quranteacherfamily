@@ -32,7 +32,6 @@ export function MemorizeHomeScreen() {
   const getProfile = useGamificationStore(s => s.getProfile);
   const startSession = useSessionStore(s => s.startSession);
   const setDailyTarget = useGamificationStore(s => s.setDailyTarget);
-  const hasActiveSession = useSessionStore(s => s.hasActiveSession());
 
   const [sessionModalVisible, setSessionModalVisible] = useState(false);
   const [selectedSurah, setSelectedSurah] = useState<number>(1);
@@ -53,13 +52,13 @@ export function MemorizeHomeScreen() {
     return Object.values(practiceStatus[learner.id] ?? {}).filter(
       s => s.status === 'memorized',
     );
-  }, [learner?.id, practiceStatus]);
+  }, [learner, practiceStatus]);
 
   // All surahs with memorization progress
   const surahsWithProgress = useMemo(() => {
     if (!learner) {return [];}
     return surahs.map(s => ({surah: s, prog: calculateMemorizationProgress(learner.id, s.number)}));
-  }, [learner?.id, surahs, calculateMemorizationProgress]);
+  }, [learner, surahs, calculateMemorizationProgress]);
 
   function handleStartSession(studyMins: number, breakMins: number, targetAyahs: number) {
     setSessionModalVisible(false);
@@ -83,13 +82,18 @@ export function MemorizeHomeScreen() {
   }
 
   return (
-    <ScreenWrapper>
+    <ScreenWrapper
+      scrollable={false}
+      safeAreaEdges={['top', 'left', 'right']}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.container}>
         {/* Header */}
         <View style={[styles.header, {backgroundColor: colors.primary}]}>
-          <Text style={[styles.headerTitle, {color: colors.textInverse}]}>🧠 Memorize</Text>
+          <Text style={[styles.headerTitle, {color: colors.textInverse}]}>Practice</Text>
           <Text style={[styles.headerSub, {color: colors.textInverse + '99'}]}>
             {profile?.totalAyahsMemorized ?? 0} ayahs memorized · 🔥 {profile?.streak ?? 0}-day streak
+          </Text>
+          <Text style={[styles.headerGuide, {color: colors.textInverse + 'CC'}]}>
+            Choose guided memorization, repeat practice, or review your progress.
           </Text>
         </View>
 
@@ -121,14 +125,14 @@ export function MemorizeHomeScreen() {
               setEndAyah(3);
               setSessionModalVisible(true);
             }}
-            accessibilityLabel={hasActiveSession ? 'Resume session' : 'Start memorization session'}
+            accessibilityLabel="Start guided memorization"
             style={[styles.bigBtn, {backgroundColor: colors.primary}]}>
-            <Text style={styles.bigBtnEmoji}>{hasActiveSession ? '▶️' : '🧠'}</Text>
+            <Text style={styles.bigBtnEmoji}>🧠</Text>
             <Text style={[styles.bigBtnLabel, {color: colors.textInverse}]}>
-              {hasActiveSession ? 'Resume Session' : 'New Session'}
+              Guided Memorization
             </Text>
             <Text style={[styles.bigBtnSub, {color: colors.textInverse + '99'}]}>
-              Guided 5-step memorization
+              Al-Fatihah · ayahs 1–3 · five simple steps
             </Text>
           </TouchableOpacity>
 
@@ -157,7 +161,7 @@ export function MemorizeHomeScreen() {
 
         {/* Quick start surahs */}
         <Text style={[styles.sectionTitle, {color: colors.textPrimary}]}>
-          📖 Quick Start
+          Choose a Surah
         </Text>
         {surahsWithProgress.map(({surah, prog}) => {
           const pct = prog.total > 0 ? prog.memorized / prog.total : 0;
@@ -214,6 +218,7 @@ const styles = StyleSheet.create({
   header: {padding: 20, gap: 4},
   headerTitle: {fontSize: 24, fontWeight: '800'},
   headerSub: {fontSize: 13},
+  headerGuide: {fontSize: 12, lineHeight: 17, marginTop: 4},
   alertCard: {
     flexDirection: 'row',
     alignItems: 'center',

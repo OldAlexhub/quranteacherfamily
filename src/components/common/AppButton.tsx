@@ -2,14 +2,12 @@ import React from 'react';
 import {
   TouchableOpacity,
   Text,
-  StyleSheet,
   ActivityIndicator,
   ViewStyle,
   TextStyle,
-  View,
 } from 'react-native';
 import {useTheme} from '../../theme';
-import {Radii, Spacing} from '../../theme/spacing';
+import {Radii} from '../../theme/spacing';
 
 interface AppButtonProps {
   label: string;

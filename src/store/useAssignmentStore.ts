@@ -1,6 +1,6 @@
 import {create} from 'zustand';
 import {KEYS, storageGet, storageSet} from '../storage/storage';
-import type {Assignment, AssignmentType, AssignmentStatus} from '../types';
+import type {Assignment} from '../types';
 import {generateId} from '../utils/idUtils';
 
 type AssignmentMap = Record<string, Assignment[]>;

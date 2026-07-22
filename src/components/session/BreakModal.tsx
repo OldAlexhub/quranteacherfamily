@@ -1,5 +1,6 @@
 import React, {useEffect, useRef} from 'react';
 import {Modal, View, Text, StyleSheet, Animated} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTheme} from '../../theme';
 import {AppButton} from '../common/AppButton';
 import {useSessionStore} from '../../store/useSessionStore';
@@ -20,6 +21,7 @@ function formatTime(secs: number): string {
 
 export function BreakModal({visible, onContinue, onEndSession, xpEarned, ayahsCompleted}: Props) {
   const {colors} = useTheme();
+  const insets = useSafeAreaInsets();
   const remainingBreak = useSessionStore(s => s.getRemainingBreakSeconds());
   const session = useSessionStore(s => s.activeSession);
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -40,8 +42,24 @@ export function BreakModal({visible, onContinue, onEndSession, xpEarned, ayahsCo
   const pct = breakTotal > 0 ? Math.max(0, 1 - remainingBreak / breakTotal) : 1;
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onContinue}>
-      <View style={[styles.overlay, {backgroundColor: colors.modalBackground}]}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      statusBarTranslucent
+      navigationBarTranslucent
+      onRequestClose={onContinue}>
+      <View
+        style={[
+          styles.overlay,
+          {
+            backgroundColor: colors.modalBackground,
+            paddingTop: Math.max(24, insets.top + 12),
+            paddingRight: Math.max(24, insets.right + 12),
+            paddingBottom: Math.max(24, insets.bottom + 12),
+            paddingLeft: Math.max(24, insets.left + 12),
+          },
+        ]}>
         <Animated.View
           style={[styles.card, {backgroundColor: colors.surface, opacity: fadeAnim}]}>
           <Text style={styles.emoji}>☕</Text>
@@ -108,7 +126,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
   },
   card: {
     width: '100%',

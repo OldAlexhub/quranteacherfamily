@@ -1,5 +1,7 @@
 // ─── Quran Content ──────────────────────────────────────────────────────────
 
+import type {NavigatorScreenParams} from '@react-navigation/native';
+
 export interface Surah {
   id: number;
   number: number;
@@ -244,23 +246,47 @@ export type RootStackParamList = {
 };
 
 export type MainTabParamList = {
-  HomeTab: undefined;
-  QuranTab: undefined;
-  MemorizeTab: undefined;
-  ProgressTab: undefined;
-  SettingsTab: undefined;
+  HomeTab: NavigatorScreenParams<HomeStackParamList> | undefined;
+  QuranTab: NavigatorScreenParams<QuranStackParamList> | undefined;
+  MemorizeTab: NavigatorScreenParams<MemorizeStackParamList> | undefined;
+  ProgressTab: NavigatorScreenParams<ProgressStackParamList> | undefined;
+  SettingsTab: NavigatorScreenParams<SettingsStackParamList> | undefined;
 };
 
 export type QuranStackParamList = {
   SurahList: undefined;
-  QuranReader: {surahNumber: number; startAyah?: number};
+  QuranReader: {
+    surahNumber: number;
+    startAyah?: number;
+    endAyah?: number;
+    assignmentTitle?: string;
+    launchKey?: string;
+  };
   AyahDetail: {surahNumber: number; ayahNumber: number};
-  WordTeacherMode: {surahNumber: number; ayahNumber: number; wordIndex?: number};
+  WordTeacherMode: {
+    surahNumber: number;
+    ayahNumber: number;
+    endAyah?: number;
+    wordIndex?: number;
+    repeatCount?: number;
+    assignmentTitle?: string;
+    launchKey?: string;
+  };
+};
+
+export type RepeatPracticeParams = {
+  surahNumber?: number;
+  startAyah?: number;
+  endAyah?: number;
+  repeatCount?: number;
+  mode?: Extract<PracticeMode, 'listen_only' | 'repeat_after' | 'memorization_review'>;
+  assignmentTitle?: string;
+  launchKey?: string;
 };
 
 export type PracticeStackParamList = {
   PracticeHome: undefined;
-  RepeatPractice: {surahNumber?: number; startAyah?: number; endAyah?: number};
+  RepeatPractice: RepeatPracticeParams;
   MemorizationTracker: {learnerId?: string};
 };
 
@@ -289,7 +315,7 @@ export type MemorizeStackParamList = {
   };
   SessionSummary: {sessionId: string};
   MemorizationTracker: {learnerId?: string};
-  RepeatPractice: {surahNumber?: number; startAyah?: number; endAyah?: number};
+  RepeatPractice: RepeatPracticeParams;
 };
 
 export type ProgressStackParamList = {

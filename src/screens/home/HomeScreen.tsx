@@ -17,7 +17,6 @@ import {useSessionStore} from '../../store/useSessionStore';
 import {ScreenWrapper} from '../../components/layout/ScreenWrapper';
 import {StreakBadge} from '../../components/gamification/StreakBadge';
 import {XPProgressBar} from '../../components/gamification/XPProgressBar';
-import {SessionSetupModal} from '../../components/session/SessionSetupModal';
 import {BannerAdComponent} from '../../ads/BannerAdComponent';
 import {loadSurahs, getSurah} from '../../data/loaders';
 import type {HomeStackParamList} from '../../types';
@@ -49,12 +48,8 @@ export function HomeScreen() {
   const getProfile = useGamificationStore(s => s.getProfile);
   const getDailyGoal = useGamificationStore(s => s.getDailyGoal);
   const checkAndUpdateStreak = useGamificationStore(s => s.checkAndUpdateStreak);
-  const setDailyTarget = useGamificationStore(s => s.setDailyTarget);
-
   const hasActiveSession = useSessionStore(s => s.hasActiveSession());
-  const startSession = useSessionStore(s => s.startSession);
 
-  const [sessionModalVisible, setSessionModalVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [tick, setTick] = useState(0);
 
@@ -101,22 +96,18 @@ export function HomeScreen() {
       ? Math.min(dailyGoal.completedAyahs / dailyGoal.targetAyahs, 1)
       : 0;
 
-  function handleStartSession(studyMins: number, breakMins: number, targetAyahs: number) {
-    setSessionModalVisible(false);
-    if (learner) {
-      setDailyTarget(learner.id, targetAyahs);
-      startSession(learner.id, studyMins, breakMins);
-    }
-    navigation.getParent()?.navigate('MemorizeTab' as any);
-  }
-
   if (!learner) {
     return (
-      <ScreenWrapper>
+      <ScreenWrapper
+        scrollable={false}
+        safeAreaEdges={['top', 'left', 'right']}>
         <View style={styles.emptyCenter}>
           <Text style={styles.emptyEmoji}>👤</Text>
           <Text style={[styles.emptyTitle, {color: colors.textPrimary}]}>
             No learner set up yet
+          </Text>
+          <Text style={[styles.emptyBody, {color: colors.textMuted}]}>
+            Create a learner to save goals and progress, or start by reading the Quran.
           </Text>
           <TouchableOpacity
             onPress={() => navigation.navigate('CreateLearner')}
@@ -125,13 +116,21 @@ export function HomeScreen() {
               Create Learner
             </Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.getParent()?.navigate('QuranTab' as any)}
+            style={[styles.exploreBtn, {borderColor: colors.primary}]}
+            accessibilityLabel="Read Quran without a learner">
+            <Text style={[styles.exploreBtnText, {color: colors.primary}]}>Read Quran</Text>
+          </TouchableOpacity>
         </View>
       </ScreenWrapper>
     );
   }
 
   return (
-    <ScreenWrapper>
+    <ScreenWrapper
+      scrollable={false}
+      safeAreaEdges={['top', 'left', 'right']}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -143,6 +142,9 @@ export function HomeScreen() {
         }>
         {/* ── Header ──────────────────────────────────────────────── */}
         <View style={[styles.header, {backgroundColor: colors.primary}]}>
+          <Text style={[styles.brandLabel, {color: colors.textInverse + 'AA'}]}>
+            QURAN TEACHER FAMILY
+          </Text>
           <View style={styles.headerTop}>
             <View>
               <Text style={[styles.greeting, {color: colors.textInverse + 'BB'}]}>
@@ -179,7 +181,9 @@ export function HomeScreen() {
               </View>
             </View>
 
-            <View
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Achievements', {})}
+              accessibilityLabel={`Level ${gamProfile?.level ?? 1}, view achievements`}
               style={[
                 styles.levelChip,
                 {backgroundColor: colors.accent + '22', borderColor: colors.accent + '55'},
@@ -190,8 +194,12 @@ export function HomeScreen() {
               <Text style={[styles.levelTitle, {color: colors.accentLight}]}>
                 {levelTitle}
               </Text>
-            </View>
+            </TouchableOpacity>
           </View>
+
+          <Text style={[styles.headerPurpose, {color: colors.textInverse + 'CC'}]}>
+            Read, listen, and build Quran memorization one step at a time.
+          </Text>
 
           {/* XP Bar */}
           <View style={styles.xpBarWrapper}>
@@ -296,16 +304,22 @@ export function HomeScreen() {
           )}
 
           {/* ── Primary CTA Buttons ─────────────────────────────────── */}
+          <Text style={[styles.activityPrompt, {color: colors.textPrimary}]}>
+            What would you like to do?
+          </Text>
           <View style={styles.ctaRow}>
             <TouchableOpacity
-              onPress={() => setSessionModalVisible(true)}
-              accessibilityLabel={hasActiveSession ? 'Resume session' : 'Start study session'}
+              onPress={() => navigation.getParent()?.navigate('MemorizeTab' as any)}
+              accessibilityLabel={hasActiveSession ? 'Return to practice' : 'Start practice'}
               style={[styles.primaryCTA, {backgroundColor: colors.primary}]}>
               <Text style={styles.ctaEmoji}>
                 {hasActiveSession ? '▶️' : '🧠'}
               </Text>
               <Text style={[styles.ctaLabel, {color: colors.textInverse}]}>
-                {hasActiveSession ? 'Resume Session' : 'Start Session'}
+                {hasActiveSession ? 'Return to Practice' : 'Start Practice'}
+              </Text>
+              <Text style={[styles.ctaSub, {color: colors.textInverse + 'BB'}]}>
+                Guided memorization and review
               </Text>
             </TouchableOpacity>
 
@@ -318,7 +332,10 @@ export function HomeScreen() {
               ]}>
               <Text style={styles.ctaEmoji}>📖</Text>
               <Text style={[styles.secondaryCTALabel, {color: colors.textPrimary}]}>
-                Open Quran
+                Read Quran
+              </Text>
+              <Text style={[styles.secondaryCTASub, {color: colors.textMuted}]}>
+                Browse 114 surahs
               </Text>
             </TouchableOpacity>
           </View>
@@ -362,28 +379,29 @@ export function HomeScreen() {
             </View>
           )}
 
-          {/* ── Quick Links ─────────────────────────────────────────── */}
+          {/* ── Family tools ────────────────────────────────────────── */}
+          <Text style={[styles.activityPrompt, {color: colors.textPrimary}]}>More tools</Text>
           <View style={styles.quickRow}>
             <TouchableOpacity
-              onPress={() => navigation.navigate('Achievements', {})}
-              accessibilityLabel="View achievements"
+              onPress={() => navigation.navigate('Search')}
+              accessibilityLabel="Search Quran"
               style={[
                 styles.quickBtn,
                 {backgroundColor: colors.accent + '18', borderColor: colors.accent + '44'},
               ]}>
-              <Text style={styles.quickEmoji}>🏆</Text>
-              <Text style={[styles.quickLabel, {color: colors.textPrimary}]}>Achievements</Text>
+              <Text style={styles.quickEmoji}>🔍</Text>
+              <Text style={[styles.quickLabel, {color: colors.textPrimary}]}>Search Quran</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => navigation.getParent()?.navigate('ProgressTab' as any)}
-              accessibilityLabel="View full report"
+              onPress={() => navigation.navigate('Bookmarks')}
+              accessibilityLabel="View saved ayahs"
               style={[
                 styles.quickBtn,
                 {backgroundColor: colors.info + '18', borderColor: colors.info + '44'},
               ]}>
-              <Text style={styles.quickEmoji}>📊</Text>
-              <Text style={[styles.quickLabel, {color: colors.textPrimary}]}>Full Report</Text>
+              <Text style={styles.quickEmoji}>🔖</Text>
+              <Text style={[styles.quickLabel, {color: colors.textPrimary}]}>Saved Ayahs</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -396,6 +414,17 @@ export function HomeScreen() {
               <Text style={styles.quickEmoji}>📝</Text>
               <Text style={[styles.quickLabel, {color: colors.textPrimary}]}>Assignments</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => navigation.navigate('ParentDashboard')}
+              accessibilityLabel="Open parent dashboard"
+              style={[
+                styles.quickBtn,
+                {backgroundColor: colors.primary + '18', borderColor: colors.primary + '33'},
+              ]}>
+              <Text style={styles.quickEmoji}>👪</Text>
+              <Text style={[styles.quickLabel, {color: colors.textPrimary}]}>Parent Tools</Text>
+            </TouchableOpacity>
           </View>
 
           {/* ── Banner Ad ───────────────────────────────────────────── */}
@@ -405,17 +434,13 @@ export function HomeScreen() {
         </View>
       </ScrollView>
 
-      <SessionSetupModal
-        visible={sessionModalVisible}
-        onClose={() => setSessionModalVisible(false)}
-        onStart={handleStartSession}
-      />
     </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {paddingHorizontal: 20, paddingTop: 16, paddingBottom: 20, gap: 12},
+  header: {paddingHorizontal: 20, paddingTop: 14, paddingBottom: 20, gap: 10},
+  brandLabel: {fontSize: 10, fontWeight: '800', letterSpacing: 1.2},
   headerTop: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start'},
   greeting: {fontSize: 12, fontWeight: '500'},
   learnerName: {fontSize: 24, fontWeight: '800', marginTop: 2},
@@ -441,6 +466,7 @@ const styles = StyleSheet.create({
   },
   levelNum: {fontSize: 13, fontWeight: '800'},
   levelTitle: {fontSize: 10, fontWeight: '600'},
+  headerPurpose: {fontSize: 13, lineHeight: 18, maxWidth: 320},
   xpBarWrapper: {gap: 4},
   xpNote: {fontSize: 10, textAlign: 'right'},
   content: {padding: 16, gap: 12},
@@ -465,6 +491,7 @@ const styles = StyleSheet.create({
   suggestionTitle: {fontSize: 14, fontWeight: '700'},
   suggestionSub: {fontSize: 12, marginTop: 2},
   arrow: {fontSize: 24, fontWeight: '700'},
+  activityPrompt: {fontSize: 17, fontWeight: '800', marginTop: 4},
   ctaRow: {flexDirection: 'row', gap: 10},
   primaryCTA: {
     flex: 2,
@@ -488,7 +515,9 @@ const styles = StyleSheet.create({
   },
   ctaEmoji: {fontSize: 26},
   ctaLabel: {fontSize: 15, fontWeight: '800'},
+  ctaSub: {fontSize: 10, fontWeight: '500', textAlign: 'center'},
   secondaryCTALabel: {fontSize: 13, fontWeight: '700'},
+  secondaryCTASub: {fontSize: 10, textAlign: 'center'},
   progressRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -501,9 +530,10 @@ const styles = StyleSheet.create({
   surahSub: {fontSize: 11, marginTop: 1},
   miniTrack: {height: 6, borderRadius: 3, overflow: 'hidden'},
   miniFill: {height: 6},
-  quickRow: {flexDirection: 'row', gap: 8},
+  quickRow: {flexDirection: 'row', flexWrap: 'wrap', gap: 8},
   quickBtn: {
-    flex: 1,
+    flexGrow: 1,
+    flexBasis: '46%',
     borderRadius: 14,
     borderWidth: 1,
     paddingVertical: 14,
@@ -516,6 +546,9 @@ const styles = StyleSheet.create({
   emptyCenter: {flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 40},
   emptyEmoji: {fontSize: 56},
   emptyTitle: {fontSize: 20, fontWeight: '700', textAlign: 'center'},
+  emptyBody: {fontSize: 14, lineHeight: 20, textAlign: 'center', maxWidth: 320},
   createBtn: {paddingHorizontal: 28, paddingVertical: 14, borderRadius: 14, marginTop: 8},
   createBtnText: {fontSize: 16, fontWeight: '700'},
+  exploreBtn: {paddingHorizontal: 28, paddingVertical: 12, borderRadius: 14, borderWidth: 1.5},
+  exploreBtnText: {fontSize: 15, fontWeight: '700'},
 });

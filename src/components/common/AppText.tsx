@@ -1,5 +1,5 @@
 import React from 'react';
-import {Text, TextStyle, StyleSheet, TextProps} from 'react-native';
+import {Text, TextStyle, TextProps} from 'react-native';
 import {useTheme} from '../../theme';
 
 interface AppTextProps extends TextProps {

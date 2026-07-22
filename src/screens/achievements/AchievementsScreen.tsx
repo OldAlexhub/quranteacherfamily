@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Modal,
 } from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTheme} from '../../theme';
 import {useLearnerStore} from '../../store/useLearnerStore';
 import {
@@ -32,11 +33,27 @@ function BadgeDetailModal({
   onClose: () => void;
 }) {
   const {colors} = useTheme();
+  const insets = useSafeAreaInsets();
   if (!badge) {return null;}
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      statusBarTranslucent
+      navigationBarTranslucent
+      onRequestClose={onClose}>
       <TouchableOpacity
-        style={[styles.modalOverlay, {backgroundColor: colors.modalBackground}]}
+        style={[
+          styles.modalOverlay,
+          {
+            backgroundColor: colors.modalBackground,
+            paddingTop: Math.max(24, insets.top + 12),
+            paddingRight: Math.max(24, insets.right + 12),
+            paddingBottom: Math.max(24, insets.bottom + 12),
+            paddingLeft: Math.max(24, insets.left + 12),
+          },
+        ]}
         onPress={onClose}
         activeOpacity={1}>
         <View style={[styles.modalCard, {backgroundColor: colors.surface, borderColor: colors.border}]}>
@@ -120,7 +137,7 @@ export function AchievementsScreen() {
   }
 
   return (
-    <ScreenWrapper>
+    <ScreenWrapper scrollable={false}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.container}>
         {/* Level card */}
         <View style={[styles.levelCard, {backgroundColor: colors.primary}]}>

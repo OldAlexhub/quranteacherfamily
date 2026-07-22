@@ -1,8 +1,8 @@
 import React, {useState, useMemo} from 'react';
 import {View, Text, ScrollView, TouchableOpacity, TextInput, Alert, KeyboardAvoidingView, Platform} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {useNavigation, useRoute} from '@react-navigation/native';
-import type {NativeStackNavigationProp, RouteProp} from '@react-navigation/native-stack';
+import {useNavigation, useRoute, type RouteProp} from '@react-navigation/native';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {HomeStackParamList, AssignmentType} from '../../types';
 import {useTheme} from '../../theme';
 import {Spacing, Radii} from '../../theme/spacing';
@@ -112,7 +112,7 @@ export function CreateAssignmentScreen() {
   }
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: c.background}} edges={['bottom']}>
+    <SafeAreaView style={{flex: 1, backgroundColor: c.background}} edges={['left', 'right']}>
       <KeyboardAvoidingView style={{flex: 1}} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
           contentContainerStyle={{padding: Spacing[4], paddingBottom: 40}}

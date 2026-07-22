@@ -27,21 +27,24 @@ export function SurahListScreen() {
   const surahs = loadSurahs();
   const activeLearner = useLearnerStore(s => s.getActiveLearner());
   const readingProgress = useProgressStore(s => activeLearner ? s.readingProgress[activeLearner.id] : null);
-  const getPracticeStatus = useProgressStore(s => s.getPracticeStatus);
+  const calculateMemorizationProgress = useProgressStore(s => s.calculateMemorizationProgress);
 
   const displayedSurahs = useMemo(() => {
     let list = query.trim().length > 0 ? searchSurahs(query) : surahs;
     if (filter !== 'all' && activeLearner) {
       list = list.filter(s => {
-        const status = getPracticeStatus(activeLearner.id, s.number, 1);
-        if (filter === 'memorized') return status === 'memorized';
-        if (filter === 'needs_review') return status === 'needs_review';
-        if (filter === 'in_progress') return status === 'practicing' || status === 'learning';
+        const progress = calculateMemorizationProgress(activeLearner.id, s.number);
+        if (filter === 'memorized') return progress.memorized >= s.ayahCount;
+        if (filter === 'needs_review') return progress.needsReview > 0;
+        if (filter === 'in_progress') {
+          return progress.practicing + progress.notStarted > 0 ||
+            (progress.memorized > 0 && progress.memorized < s.ayahCount);
+        }
         return true;
       });
     }
     return list;
-  }, [query, filter, activeLearner?.id]);
+  }, [query, filter, activeLearner, calculateMemorizationProgress, surahs]);
 
   const filters: {key: FilterType; label: string}[] = [
     {key: 'all', label: 'All'},
@@ -51,7 +54,7 @@ export function SurahListScreen() {
   ];
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: c.background}} edges={['top']}>
+    <SafeAreaView style={{flex: 1, backgroundColor: c.background}} edges={['left', 'right']}>
       {/* Search */}
       <View style={{paddingHorizontal: Spacing[4], paddingTop: Spacing[3], paddingBottom: Spacing[2]}}>
         <View style={{

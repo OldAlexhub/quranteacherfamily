@@ -29,6 +29,9 @@ function AppContent() {
   const loadSessionHistory = useSessionStore(s => s.loadSessionHistory);
 
   useEffect(() => {
+    let cancelled = false;
+    let preloadTimer: ReturnType<typeof setTimeout> | undefined;
+
     async function init() {
       try {
         // Initialize AdMob first — safe to fail silently
@@ -57,17 +60,34 @@ function AppContent() {
         initializePlayer().catch(() => {});
 
         // Preload interstitial in background after app settles
-        if (ENABLE_BANNER_ADS) {
-          setTimeout(() => preloadInterstitial(), 8000);
+        if (ENABLE_BANNER_ADS && !cancelled) {
+          preloadTimer = setTimeout(() => preloadInterstitial(), 8000);
         }
       } catch (e) {
         console.warn('App init error:', e);
       } finally {
-        setReady(true);
+        if (!cancelled) {
+          setReady(true);
+        }
       }
     }
     init();
-  }, []);
+
+    return () => {
+      cancelled = true;
+      if (preloadTimer) {
+        clearTimeout(preloadTimer);
+      }
+    };
+  }, [
+    loadAssignments,
+    loadBookmarks,
+    loadGamification,
+    loadLearners,
+    loadPreferences,
+    loadProgress,
+    loadSessionHistory,
+  ]);
 
   const theme = buildTheme(
     preferences.theme,
@@ -78,7 +98,7 @@ function AppContent() {
   if (!ready || !prefsLoaded) {
     return (
       <ThemeContext.Provider value={theme}>
-        <LoadingScreen message="Quran Teacher" />
+        <LoadingScreen message="Quran Teacher Family" />
       </ThemeContext.Provider>
     );
   }
@@ -87,8 +107,6 @@ function AppContent() {
     <ThemeContext.Provider value={theme}>
       <StatusBar
         barStyle={preferences.theme === 'dark' ? 'light-content' : 'dark-content'}
-        backgroundColor={theme.colors.background}
-        translucent={false}
       />
       <RootNavigator />
     </ThemeContext.Provider>

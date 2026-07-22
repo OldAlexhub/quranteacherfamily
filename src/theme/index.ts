@@ -2,7 +2,7 @@ export * from './colors';
 export * from './typography';
 export * from './spacing';
 
-import React, {createContext, useContext} from 'react';
+import {createContext, useContext} from 'react';
 import {getColors, type ColorScheme, type ThemeType} from './colors';
 import {ArabicFontSizeDefaults, EnglishMeaningFontSizeDefaults} from './typography';
 

@@ -2,6 +2,8 @@ import React, {useState} from 'react';
 import {View, Text, FlatList, TouchableOpacity, TextInput, Alert} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
+import type {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {useTheme} from '../../theme';
 import {Spacing, Radii} from '../../theme/spacing';
 import {AppText} from '../../components/common/AppText';
@@ -10,7 +12,10 @@ import {EmptyState} from '../../components/common/EmptyState';
 import {useBookmarkStore} from '../../store/useBookmarkStore';
 import {useLearnerStore} from '../../store/useLearnerStore';
 import {getSurah} from '../../data/loaders';
-import type {Bookmark} from '../../types';
+import type {Bookmark, HomeStackParamList, MainTabParamList} from '../../types';
+
+type Nav = NativeStackNavigationProp<HomeStackParamList, 'Bookmarks'>;
+type TabNav = BottomTabNavigationProp<MainTabParamList>;
 
 const BOOKMARK_COLORS: Record<string, string> = {
   blue: '#2980B9',
@@ -22,7 +27,7 @@ const BOOKMARK_COLORS: Record<string, string> = {
 export function BookmarksScreen() {
   const theme = useTheme();
   const c = theme.colors;
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<Nav>();
   const activeLearner = useLearnerStore(s => s.getActiveLearner());
   const getBookmarksByLearner = useBookmarkStore(s => s.getBookmarksByLearner);
   const removeBookmark = useBookmarkStore(s => s.removeBookmark);
@@ -45,7 +50,7 @@ export function BookmarksScreen() {
   }));
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: c.background}} edges={['bottom']}>
+    <SafeAreaView style={{flex: 1, backgroundColor: c.background}} edges={['left', 'right']}>
       <View style={{paddingHorizontal: Spacing[4], paddingTop: Spacing[3], paddingBottom: Spacing[2]}}>
         <View style={{flexDirection: 'row', alignItems: 'center', backgroundColor: c.surface, borderRadius: Radii.lg, borderWidth: 1, borderColor: c.border, paddingHorizontal: Spacing[3], paddingVertical: Spacing[2]}}>
           <Text style={{color: c.textMuted, marginRight: Spacing[2]}}>🔍</Text>
@@ -81,7 +86,10 @@ export function BookmarksScreen() {
                 {section.items.map(bm => (
                   <AppCard key={bm.id} style={{marginBottom: Spacing[2]}}>
                     <TouchableOpacity
-                      onPress={() => navigation.navigate('QuranTab', {screen: 'AyahDetail', params: {surahNumber: bm.surahNumber, ayahNumber: bm.ayahNumber}})}
+                      onPress={() => navigation.getParent<TabNav>()?.navigate('QuranTab', {
+                        screen: 'AyahDetail',
+                        params: {surahNumber: bm.surahNumber, ayahNumber: bm.ayahNumber},
+                      })}
                       accessibilityLabel={`Open ayah ${bm.ayahNumber}`}
                     >
                       <View style={{flexDirection: 'row', alignItems: 'center'}}>

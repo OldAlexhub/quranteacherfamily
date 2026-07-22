@@ -74,7 +74,7 @@ export function SearchScreen() {
   }
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: c.background}} edges={['bottom']}>
+    <SafeAreaView style={{flex: 1, backgroundColor: c.background}} edges={['left', 'right']}>
       <View style={{paddingHorizontal: Spacing[4], paddingTop: Spacing[3], paddingBottom: Spacing[2]}}>
         <View style={{flexDirection: 'row', alignItems: 'center', backgroundColor: c.surface, borderRadius: Radii.lg, borderWidth: 1.5, borderColor: c.primary, paddingHorizontal: Spacing[3], paddingVertical: Spacing[2]}}>
           <Text style={{color: c.primary, marginRight: Spacing[2], fontSize: 18}}>🔍</Text>

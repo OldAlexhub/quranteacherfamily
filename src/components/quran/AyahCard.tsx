@@ -4,7 +4,6 @@ import type {GestureResponderEvent, ViewStyle} from 'react-native';
 import {useTheme} from '../../theme';
 import {Spacing, Radii, Shadows} from '../../theme/spacing';
 import type {Ayah, PracticeStatusType} from '../../types';
-import {AppText} from '../common/AppText';
 
 interface AyahCardProps {
   ayah: Ayah;
@@ -17,7 +16,6 @@ interface AyahCardProps {
   onPlay?: () => void;
   onBookmark?: () => void;
   onWordMode?: () => void;
-  onStatusChange?: (status: PracticeStatusType) => void;
   onPress?: () => void;
   style?: ViewStyle;
 }
@@ -33,7 +31,6 @@ export function AyahCard({
   onPlay,
   onBookmark,
   onWordMode,
-  onStatusChange,
   onPress,
   style,
 }: AyahCardProps) {

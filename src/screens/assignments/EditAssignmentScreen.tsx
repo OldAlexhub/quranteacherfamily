@@ -1,5 +1,4 @@
 import React from 'react';
-import {View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {ScreenWrapper} from '../../components/layout/ScreenWrapper';
 import {AppText} from '../../components/common/AppText';

@@ -1,8 +1,8 @@
 import React, {useState} from 'react';
 import {View, Text, ScrollView, TouchableOpacity, TextInput, Alert} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {useRoute, useNavigation} from '@react-navigation/native';
-import type {NativeStackNavigationProp, RouteProp} from '@react-navigation/native-stack';
+import {useRoute, useNavigation, type RouteProp} from '@react-navigation/native';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {QuranStackParamList, PracticeStatusType} from '../../types';
 import {useTheme} from '../../theme';
 import {Spacing, Radii} from '../../theme/spacing';
@@ -60,7 +60,9 @@ export function AyahDetailScreen() {
 
   if (!ayah || !surah) {
     return (
-      <SafeAreaView style={{flex: 1, backgroundColor: c.background, alignItems: 'center', justifyContent: 'center'}}>
+      <SafeAreaView
+        style={{flex: 1, backgroundColor: c.background, alignItems: 'center', justifyContent: 'center'}}
+        edges={['left', 'right']}>
         <AppText variant="body" style={{color: c.textMuted}}>Ayah not found</AppText>
       </SafeAreaView>
     );
@@ -94,7 +96,7 @@ export function AyahDetailScreen() {
   }
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: c.background}} edges={['bottom']}>
+    <SafeAreaView style={{flex: 1, backgroundColor: c.background}} edges={['left', 'right']}>
       <ScrollView contentContainerStyle={{padding: Spacing[4], paddingBottom: 40}} showsVerticalScrollIndicator={false}>
 
         {/* Reference */}

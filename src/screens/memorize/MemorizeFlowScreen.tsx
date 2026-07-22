@@ -7,9 +7,10 @@ import {
   ScrollView,
   Animated,
   Alert,
+  BackHandler,
 } from 'react-native';
-import {useNavigation, useRoute} from '@react-navigation/native';
-import type {NativeStackNavigationProp, RouteProp} from '@react-navigation/native-stack';
+import {useFocusEffect, useNavigation, useRoute, type RouteProp} from '@react-navigation/native';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {Event, useTrackPlayerEvents} from 'react-native-track-player';
 import {useTheme} from '../../theme';
 import {useLearnerStore} from '../../store/useLearnerStore';
@@ -177,6 +178,33 @@ export function MemorizeFlowScreen() {
     }
   }, [learner, incrementTotalSessions, addXP, endSession, navigation, sessionId]);
 
+  const handleLeave = useCallback(() => {
+    Alert.alert('Leave?', 'Your progress on the current ayah will be lost.', [
+      {text: 'Stay', style: 'cancel'},
+      {
+        text: 'Leave',
+        style: 'destructive',
+        onPress: () => {
+          endSession();
+          navigation.goBack();
+        },
+      },
+    ]);
+  }, [endSession, navigation]);
+
+  // Native-stack gesture blocking does not cover Android's hardware/system Back.
+  // Keep every user-initiated exit on the same guarded path so the timer cannot
+  // continue after this full-screen flow has been removed.
+  useFocusEffect(
+    useCallback(() => {
+      const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+        handleLeave();
+        return true;
+      });
+      return () => subscription.remove();
+    }, [handleLeave]),
+  );
+
   const handleMarkMemorized = useCallback(() => {
     if (!currentAyah || !learner) {return;}
 
@@ -257,7 +285,9 @@ export function MemorizeFlowScreen() {
 
   if (loading || !currentAyah) {
     return (
-      <ScreenWrapper>
+      <ScreenWrapper
+        scrollable={false}
+        safeAreaEdges={['top', 'right', 'bottom', 'left']}>
         <View style={[styles.loading, {backgroundColor: colors.background}]}>
           <Text style={[styles.loadingText, {color: colors.textMuted}]}>Loading ayahs…</Text>
         </View>
@@ -272,7 +302,9 @@ export function MemorizeFlowScreen() {
   const hideArabic = isFromMemory && !showArabic;
 
   return (
-    <ScreenWrapper>
+    <ScreenWrapper
+      scrollable={false}
+      safeAreaEdges={['top', 'right', 'bottom', 'left']}>
       {/* Session timer bar */}
       {activeSession && (
         <SessionTimerBar
@@ -291,12 +323,7 @@ export function MemorizeFlowScreen() {
       {/* Progress header */}
       <View style={[styles.progressHeader, {backgroundColor: colors.surface, borderBottomColor: colors.border}]}>
         <TouchableOpacity
-          onPress={() =>
-            Alert.alert('Leave?', 'Your progress on the current ayah will be lost.', [
-              {text: 'Stay', style: 'cancel'},
-              {text: 'Leave', style: 'destructive', onPress: () => navigation.goBack()},
-            ])
-          }
+          onPress={handleLeave}
           accessibilityLabel="Go back"
           style={styles.backBtn}>
           <Text style={[styles.backText, {color: colors.textMuted}]}>✕</Text>

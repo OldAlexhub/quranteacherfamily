@@ -1,10 +1,9 @@
 import React, {useEffect, useMemo, useState} from 'react';
 import {ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {useRoute} from '@react-navigation/native';
-import type {RouteProp} from '@react-navigation/native-stack';
+import {useRoute, type RouteProp} from '@react-navigation/native';
 import {Event, useActiveTrack, useProgress, useTrackPlayerEvents} from 'react-native-track-player';
-import type {Ayah, PracticeStackParamList, RecitationStyle} from '../../types';
+import type {Ayah, PracticeStackParamList, RecitationStyle, RepeatPracticeParams} from '../../types';
 import {useTheme} from '../../theme';
 import {Radii, Spacing} from '../../theme/spacing';
 import {AppText} from '../../components/common/AppText';
@@ -21,6 +20,15 @@ import {playRange, stopAudio} from '../../audio/audioPlayer';
 type Route = RouteProp<PracticeStackParamList, 'RepeatPractice'>;
 
 const PLAYER_EVENTS: Event[] = [Event.PlaybackQueueEnded, Event.PlaybackError];
+
+const MODE_META: Record<
+  NonNullable<RepeatPracticeParams['mode']>,
+  {summary: string; start: string; stop: string}
+> = {
+  listen_only: {summary: 'Listening practice', start: 'Start Listening', stop: 'Stop Listening'},
+  repeat_after: {summary: 'Repeat-after practice', start: 'Start Practice', stop: 'Stop Practice'},
+  memorization_review: {summary: 'Memorization review', start: 'Start Review', stop: 'Stop Review'},
+};
 
 const BASMALA_WORD_COUNT = 4;
 
@@ -52,13 +60,6 @@ function estimateAyahDurationSeconds(wordCount: number, style: RecitationStyle):
   return Math.max(4, wordCount * secondsPerWord);
 }
 
-const MODE_LABELS: Record<string, string> = {
-  listen_only: 'Listen only',
-  repeat_after: 'Repeat after',
-  word_by_word: 'Word by word',
-  memorization_review: 'Memorization review',
-};
-
 export function RepeatPracticeScreen() {
   const theme = useTheme();
   const c = theme.colors;
@@ -79,10 +80,12 @@ export function RepeatPracticeScreen() {
   const [ayahsLoading, setAyahsLoading] = useState(true);
   const [ayahLoadError, setAyahLoadError] = useState<string | null>(null);
 
-  // These come from Settings defaults
-  const repeatCount = preferences.defaultRepeatCount;
+  const practiceMode = route.params?.mode ?? 'repeat_after';
+  const modeMeta = MODE_META[practiceMode];
+  const repeatCount = Math.max(1, route.params?.repeatCount ?? preferences.defaultRepeatCount);
+  const assignmentTitle = route.params?.assignmentTitle;
+  const selectionLocked = Boolean(assignmentTitle);
   const recStyle = preferences.selectedRecitationStyle;
-  const mode = preferences.defaultPracticeMode;
 
   const currentSurah = getSurah(selectedSurah);
   const maxAyah = currentSurah?.ayahCount ?? 7;
@@ -91,7 +94,7 @@ export function RepeatPracticeScreen() {
     () => ayahs.filter(a => a.ayahNumber >= startAyah && a.ayahNumber <= endAyah),
     [ayahs, startAyah, endAyah],
   );
-  const visibleAyahNumber = isRunning && activeTrackInfo?.surahNumber === selectedSurah
+  const visibleAyahNumber = isRunning && activeTrackInfo !== null && activeTrackInfo.surahNumber === selectedSurah
     ? activeTrackInfo.ayahNumber
     : startAyah;
   const visibleAyah = selectedAyahs.find(a => a.ayahNumber === visibleAyahNumber)
@@ -110,6 +113,34 @@ export function RepeatPracticeScreen() {
   const wordProgressPercent = isRunning && visibleWords.length > 0
     ? ((activeWordIndex + 1) / visibleWords.length) * 100
     : 0;
+
+  useEffect(() => {
+    const routedSurah = route.params?.surahNumber;
+    const routedStart = route.params?.startAyah;
+    const routedEnd = route.params?.endAyah;
+    if (routedSurah === undefined && routedStart === undefined && routedEnd === undefined) return;
+
+    const nextSurah = routedSurah ?? 1;
+    const nextMaxAyah = getSurah(nextSurah)?.ayahCount ?? 7;
+    const nextStart = Math.min(Math.max(routedStart ?? 1, 1), nextMaxAyah);
+    const nextEnd = Math.min(
+      Math.max(routedEnd ?? Math.min(7, nextMaxAyah), nextStart),
+      nextMaxAyah,
+    );
+    stopAudio();
+    setCompletionPending(false);
+    setIsRunning(false);
+    setSelectedSurah(nextSurah);
+    setStartAyah(nextStart);
+    setEndAyah(nextEnd);
+  }, [
+    route.params?.endAyah,
+    route.params?.launchKey,
+    route.params?.mode,
+    route.params?.repeatCount,
+    route.params?.startAyah,
+    route.params?.surahNumber,
+  ]);
 
   useEffect(() => {
     let cancelled = false;
@@ -143,7 +174,7 @@ export function RepeatPracticeScreen() {
     setCompletionPending(false);
     setIsRunning(false);
     if (activeLearner) {
-      await createSession(activeLearner.id, mode, selectedSurah, startAyah, endAyah, repeatCount);
+      await createSession(activeLearner.id, practiceMode, selectedSurah, startAyah, endAyah, repeatCount);
     }
     recordCompletionEvent();
     setTimeout(() => tryShowInterstitial(false), 1200);
@@ -177,16 +208,21 @@ export function RepeatPracticeScreen() {
   }
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: c.background}} edges={['bottom']}>
+    <SafeAreaView style={{flex: 1, backgroundColor: c.background}} edges={['left', 'right']}>
       <ScrollView contentContainerStyle={{padding: Spacing[4], paddingBottom: 40}} showsVerticalScrollIndicator={false}>
 
         {/* Current settings summary */}
         <AppCard style={{marginBottom: Spacing[4], backgroundColor: c.surfaceAlt}}>
+          {assignmentTitle ? (
+            <AppText variant="body" weight="semibold" style={{marginBottom: 2}}>
+              {assignmentTitle}
+            </AppText>
+          ) : null}
           <AppText variant="caption" style={{color: c.textMuted}}>
-            {MODE_LABELS[mode] ?? mode} · {repeatCount}× · {recStyle === 'muallim' ? 'Muallim' : 'Mujawwad'}
+            {modeMeta.summary} · {repeatCount}× · {recStyle === 'muallim' ? 'Muallim' : 'Mujawwad'}
           </AppText>
           <AppText variant="caption" style={{color: c.primary, marginTop: 2}}>
-            Adjust in Settings → Practice Defaults
+            {assignmentTitle ? 'Range and repetitions set by this assignment' : 'Adjust repeat and audio defaults in Settings'}
           </AppText>
         </AppCard>
 
@@ -198,7 +234,7 @@ export function RepeatPracticeScreen() {
               {surahs.map(s => (
                 <TouchableOpacity
                   key={s.number}
-                  disabled={isRunning}
+                  disabled={isRunning || selectionLocked}
                   onPress={() => {
                     setSelectedSurah(s.number);
                     setStartAyah(1);
@@ -209,7 +245,7 @@ export function RepeatPracticeScreen() {
                     borderRadius: Radii.md,
                     backgroundColor: selectedSurah === s.number ? c.primary : c.surfaceAlt,
                     borderWidth: 1, borderColor: selectedSurah === s.number ? c.primary : c.border,
-                    opacity: isRunning ? 0.55 : 1,
+                    opacity: isRunning || selectionLocked ? 0.55 : 1,
                   }}
                   accessibilityLabel={`Select ${s.transliteration}`}
                 >
@@ -229,24 +265,24 @@ export function RepeatPracticeScreen() {
             <View style={{flex: 1}}>
               <AppText variant="caption" style={{color: c.textMuted, marginBottom: 4}}>Start ayah</AppText>
               <View style={{flexDirection: 'row', alignItems: 'center', gap: Spacing[3]}}>
-                <TouchableOpacity disabled={isRunning} onPress={() => setStartAyah(v => Math.max(1, v - 1))} accessibilityLabel="Decrease start ayah">
-                  <Text style={{color: c.primary, fontSize: 24, opacity: isRunning ? 0.45 : 1}}>-</Text>
+                <TouchableOpacity disabled={isRunning || selectionLocked} onPress={() => setStartAyah(v => Math.max(1, v - 1))} accessibilityLabel="Decrease start ayah">
+                  <Text style={{color: c.primary, fontSize: 24, opacity: isRunning || selectionLocked ? 0.45 : 1}}>-</Text>
                 </TouchableOpacity>
                 <AppText variant="heading" weight="bold">{startAyah}</AppText>
-                <TouchableOpacity disabled={isRunning} onPress={() => setStartAyah(v => Math.min(endAyah, v + 1))} accessibilityLabel="Increase start ayah">
-                  <Text style={{color: c.primary, fontSize: 24, opacity: isRunning ? 0.45 : 1}}>+</Text>
+                <TouchableOpacity disabled={isRunning || selectionLocked} onPress={() => setStartAyah(v => Math.min(endAyah, v + 1))} accessibilityLabel="Increase start ayah">
+                  <Text style={{color: c.primary, fontSize: 24, opacity: isRunning || selectionLocked ? 0.45 : 1}}>+</Text>
                 </TouchableOpacity>
               </View>
             </View>
             <View style={{flex: 1}}>
               <AppText variant="caption" style={{color: c.textMuted, marginBottom: 4}}>End ayah</AppText>
               <View style={{flexDirection: 'row', alignItems: 'center', gap: Spacing[3]}}>
-                <TouchableOpacity disabled={isRunning} onPress={() => setEndAyah(v => Math.max(startAyah, v - 1))} accessibilityLabel="Decrease end ayah">
-                  <Text style={{color: c.primary, fontSize: 24, opacity: isRunning ? 0.45 : 1}}>-</Text>
+                <TouchableOpacity disabled={isRunning || selectionLocked} onPress={() => setEndAyah(v => Math.max(startAyah, v - 1))} accessibilityLabel="Decrease end ayah">
+                  <Text style={{color: c.primary, fontSize: 24, opacity: isRunning || selectionLocked ? 0.45 : 1}}>-</Text>
                 </TouchableOpacity>
                 <AppText variant="heading" weight="bold">{endAyah}</AppText>
-                <TouchableOpacity disabled={isRunning} onPress={() => setEndAyah(v => Math.min(maxAyah, v + 1))} accessibilityLabel="Increase end ayah">
-                  <Text style={{color: c.primary, fontSize: 24, opacity: isRunning ? 0.45 : 1}}>+</Text>
+                <TouchableOpacity disabled={isRunning || selectionLocked} onPress={() => setEndAyah(v => Math.min(maxAyah, v + 1))} accessibilityLabel="Increase end ayah">
+                  <Text style={{color: c.primary, fontSize: 24, opacity: isRunning || selectionLocked ? 0.45 : 1}}>+</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -358,9 +394,9 @@ export function RepeatPracticeScreen() {
 
         {/* Start / Stop */}
         {isRunning ? (
-          <AppButton label="Stop Practice" onPress={stopPractice} variant="danger" size="lg" fullWidth />
+          <AppButton label={modeMeta.stop} onPress={stopPractice} variant="danger" size="lg" fullWidth />
         ) : (
-          <AppButton label="Start Practice" onPress={startPractice} size="lg" fullWidth disabled={ayahsLoading} />
+          <AppButton label={modeMeta.start} onPress={startPractice} size="lg" fullWidth disabled={ayahsLoading} />
         )}
 
       </ScrollView>

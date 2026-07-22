@@ -1,5 +1,5 @@
 import React, {useMemo} from 'react';
-import {View, Text, ScrollView, TouchableOpacity, Alert} from 'react-native';
+import {View, Text, TouchableOpacity, Alert} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {HomeStackParamList, Assignment} from '../../types';
@@ -17,13 +17,14 @@ import {useAssignmentStore} from '../../store/useAssignmentStore';
 import {storageClearLearner} from '../../storage/storage';
 import {getSurah} from '../../data/loaders';
 import {tryShowInterstitial, recordCompletionEvent} from '../../ads/interstitialAdService';
+import {
+  ASSIGNMENT_ICONS,
+  getAssignmentActionLabel,
+  getAssignmentDetail,
+  launchAssignment,
+} from '../../navigation/assignmentNavigation';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
-
-const TYPE_ICONS: Record<string, string> = {
-  read_arabic: '📖', listen: '🔊', word_by_word: 'ا',
-  memorization_review: '⭐', free_reading: '🌙',
-};
 
 export function ParentDashboardScreen() {
   const theme = useTheme();
@@ -86,10 +87,7 @@ export function ParentDashboardScreen() {
   }
 
   function startAssignment(a: Assignment) {
-    (navigation as any).navigate('PracticeTab', {
-      screen: 'RepeatPractice',
-      params: {surahNumber: a.surahNumber, startAyah: a.startAyah, endAyah: a.endAyah},
-    });
+    launchAssignment(navigation, a);
   }
 
   async function markDone(a: Assignment) {
@@ -223,12 +221,12 @@ export function ParentDashboardScreen() {
                     alignItems: 'center', justifyContent: 'center',
                     marginRight: Spacing[2],
                   }}>
-                    <Text style={{fontSize: 20}}>{TYPE_ICONS[a.type] ?? '📋'}</Text>
+                    <Text style={{fontSize: 20}}>{ASSIGNMENT_ICONS[a.type]}</Text>
                   </View>
                   <View style={{flex: 1}}>
                     <AppText variant="body" weight="semibold" numberOfLines={1} style={{marginBottom: 1}}>{a.title}</AppText>
                     <AppText variant="caption" style={{color: c.textMuted}}>
-                      {surah?.transliteration ?? `Surah ${a.surahNumber}`} · Ayah {a.startAyah}–{a.endAyah} · {a.repeatCount ?? 3}× repeat
+                      {getAssignmentDetail(a, surah?.transliteration ?? `Surah ${a.surahNumber}`)}
                     </AppText>
                   </View>
                   {isOverdue && (
@@ -255,10 +253,12 @@ export function ParentDashboardScreen() {
                       flex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
                       backgroundColor: c.primary, borderRadius: Radii.md, paddingVertical: Spacing[2],
                     }}
-                    accessibilityLabel="Start practice"
+                    accessibilityLabel={getAssignmentActionLabel(a.type)}
                   >
                     <Text style={{color: '#fff', fontSize: 14}}>▶</Text>
-                    <Text style={{color: '#fff', fontSize: 13, fontWeight: '700'}}>Start Practice</Text>
+                    <Text style={{color: '#fff', fontSize: 13, fontWeight: '700'}}>
+                      {getAssignmentActionLabel(a.type)}
+                    </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => markDone(a)}

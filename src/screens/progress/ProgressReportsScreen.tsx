@@ -1,7 +1,6 @@
-import React, {useMemo, useState} from 'react';
+import React, {useMemo} from 'react';
 import {View, Text, ScrollView, TouchableOpacity, Share, Alert} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {useNavigation} from '@react-navigation/native';
 import {useTheme} from '../../theme';
 import {Spacing, Radii} from '../../theme/spacing';
 import {AppText} from '../../components/common/AppText';
@@ -15,15 +14,11 @@ import {useProgressStore} from '../../store/useProgressStore';
 import {useAssignmentStore} from '../../store/useAssignmentStore';
 import {useBookmarkStore} from '../../store/useBookmarkStore';
 
-type Period = 'today' | '7days' | '30days' | 'all';
-
 export function ProgressReportsScreen() {
   const theme = useTheme();
   const c = theme.colors;
-  const navigation = useNavigation<any>();
   const learners = useLearnerStore(s => s.learners);
   const activeLearner = useLearnerStore(s => s.getActiveLearner());
-  const [period, setPeriod] = useState<Period>('7days');
 
   const readingProgress = useProgressStore(s => activeLearner ? s.readingProgress[activeLearner.id] : null);
   const listeningProgress = useProgressStore(s => activeLearner ? s.listeningProgress[activeLearner.id] : null);
@@ -109,15 +104,8 @@ export function ProgressReportsScreen() {
     }
   }
 
-  const periods: {key: Period; label: string}[] = [
-    {key: 'today', label: 'Today'},
-    {key: '7days', label: '7 days'},
-    {key: '30days', label: '30 days'},
-    {key: 'all', label: 'All time'},
-  ];
-
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: c.background}} edges={['bottom']}>
+    <SafeAreaView style={{flex: 1, backgroundColor: c.background}} edges={['left', 'right']}>
       <ScrollView contentContainerStyle={{padding: Spacing[4], paddingBottom: 40}} showsVerticalScrollIndicator={false}>
 
         {/* Learner selector */}
@@ -130,20 +118,6 @@ export function ProgressReportsScreen() {
               accessibilityLabel={l.displayName || 'Learner'}
             >
               <Text style={{color: l.id === activeLearner?.id ? '#fff' : c.textSecondary, fontSize: 13}}>{l.displayName || 'Unnamed'}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Period filter */}
-        <View style={{flexDirection: 'row', gap: Spacing[2], marginBottom: Spacing[4]}}>
-          {periods.map(p => (
-            <TouchableOpacity
-              key={p.key}
-              onPress={() => setPeriod(p.key)}
-              style={{paddingHorizontal: 10, paddingVertical: 6, borderRadius: Radii.full, backgroundColor: period === p.key ? c.primary : c.surface, borderWidth: 1, borderColor: period === p.key ? c.primary : c.border}}
-              accessibilityLabel={p.label}
-            >
-              <Text style={{color: period === p.key ? '#fff' : c.textMuted, fontSize: 12}}>{p.label}</Text>
             </TouchableOpacity>
           ))}
         </View>

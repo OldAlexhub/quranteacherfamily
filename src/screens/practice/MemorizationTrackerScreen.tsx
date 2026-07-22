@@ -1,5 +1,5 @@
 import React, {useMemo, useState} from 'react';
-import {View, Text, FlatList, TouchableOpacity, SectionList} from 'react-native';
+import {View, Text, FlatList, TouchableOpacity} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useTheme} from '../../theme';
 import {Spacing, Radii} from '../../theme/spacing';
@@ -68,7 +68,7 @@ export function MemorizationTrackerScreen() {
 
   if (!activeLearner) {
     return (
-      <SafeAreaView style={{flex: 1, backgroundColor: c.background}}>
+      <SafeAreaView style={{flex: 1, backgroundColor: c.background}} edges={['left', 'right']}>
         <EmptyState title="No learner selected" subtitle="Select a learner to track memorization" />
       </SafeAreaView>
     );
@@ -81,7 +81,7 @@ export function MemorizationTrackerScreen() {
   ] as const;
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: c.background}} edges={['bottom']}>
+    <SafeAreaView style={{flex: 1, backgroundColor: c.background}} edges={['left', 'right']}>
       {/* Tabs */}
       <View style={{flexDirection: 'row', borderBottomWidth: 1, borderColor: c.border}}>
         {tabs.map(tab => (

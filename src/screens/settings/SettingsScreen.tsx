@@ -3,7 +3,7 @@ import {View, Text, ScrollView, TouchableOpacity, Switch, Alert} from 'react-nat
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import type {PracticeMode, SettingsStackParamList} from '../../types';
+import type {SettingsStackParamList} from '../../types';
 import {useTheme} from '../../theme';
 import {Spacing, Radii} from '../../theme/spacing';
 import {BannerAdComponent} from '../../ads/BannerAdComponent';
@@ -12,13 +12,6 @@ import {AppCard} from '../../components/common/AppCard';
 import {SectionHeader} from '../../components/layout/SectionHeader';
 import {usePreferencesStore} from '../../store/usePreferencesStore';
 import {storageClearAll} from '../../storage/storage';
-
-const PRACTICE_MODES: {value: PracticeMode; label: string; desc: string}[] = [
-  {value: 'listen_only', label: 'Listen only', desc: 'Play ayahs and listen.'},
-  {value: 'repeat_after', label: 'Repeat after', desc: 'Play each ayah, pause, then repeat it.'},
-  {value: 'word_by_word', label: 'Word by word', desc: 'Follow each word as it is recited.'},
-  {value: 'memorization_review', label: 'Memorization review', desc: 'Review ayahs from memory.'},
-];
 
 type Nav = NativeStackNavigationProp<SettingsStackParamList>;
 
@@ -34,7 +27,6 @@ export function SettingsScreen() {
   const setRecStyle = usePreferencesStore(s => s.setRecitationStyle);
   const setDefaultRepeat = usePreferencesStore(s => s.setDefaultRepeatCount);
   const setDefaultDelay = usePreferencesStore(s => s.setDefaultDelay);
-  const setDefaultPracticeMode = usePreferencesStore(s => s.setDefaultPracticeMode);
   const restoreDefaults = usePreferencesStore(s => s.restoreDefaults);
 
   function resetAllData() {
@@ -79,7 +71,7 @@ export function SettingsScreen() {
   }
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: c.background}} edges={['bottom']}>
+    <SafeAreaView style={{flex: 1, backgroundColor: c.background}} edges={['left', 'right']}>
       <ScrollView contentContainerStyle={{padding: Spacing[4], paddingBottom: 40}} showsVerticalScrollIndicator={false}>
 
         {/* Display */}
@@ -163,25 +155,9 @@ export function SettingsScreen() {
           } />
         </AppCard>
 
-        {/* Practice Defaults */}
-        <SectionHeader title="Practice Defaults" />
+        {/* Repeat practice */}
+        <SectionHeader title="Repeat Practice" />
         <AppCard style={{marginBottom: Spacing[4]}}>
-          <AppText variant="caption" style={{color: c.textMuted, marginBottom: Spacing[2]}}>Practice mode</AppText>
-          {PRACTICE_MODES.map(m => (
-            <TouchableOpacity
-              key={m.value}
-              onPress={() => setDefaultPracticeMode(m.value)}
-              style={{flexDirection: 'row', alignItems: 'center', paddingVertical: Spacing[2], borderBottomWidth: 1, borderColor: c.border}}
-              accessibilityLabel={m.label}
-            >
-              <View style={{width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: prefs.defaultPracticeMode === m.value ? c.primary : c.border, backgroundColor: prefs.defaultPracticeMode === m.value ? c.primary : 'transparent', marginRight: Spacing[3]}} />
-              <View style={{flex: 1}}>
-                <AppText variant="body" weight={prefs.defaultPracticeMode === m.value ? 'semibold' : 'regular'}>{m.label}</AppText>
-                <AppText variant="caption" style={{color: c.textMuted}}>{m.desc}</AppText>
-              </View>
-            </TouchableOpacity>
-          ))}
-
           <Row label="Delay between repeats (sec)" right={
             <View style={{flexDirection: 'row', alignItems: 'center', gap: Spacing[3]}}>
               <TouchableOpacity onPress={() => setDefaultDelay(prefs.defaultDelaySeconds - 1)} accessibilityLabel="Decrease delay">
@@ -227,7 +203,7 @@ export function SettingsScreen() {
         </AppCard>
 
         <AppText variant="caption" center style={{color: c.textMuted}}>
-          Quran Teacher Family 1.0.0{'\n'}by Old Alex Hub
+          Quran Teacher Family 1.0.4{'\n'}by Old Alex Hub
         </AppText>
 
       </ScrollView>

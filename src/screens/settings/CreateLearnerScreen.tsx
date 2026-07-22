@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {View, TextInput, TouchableOpacity, Text, Alert, KeyboardAvoidingView, Platform} from 'react-native';
+import {View, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {ScreenWrapper} from '../../components/layout/ScreenWrapper';
 import {AppText} from '../../components/common/AppText';

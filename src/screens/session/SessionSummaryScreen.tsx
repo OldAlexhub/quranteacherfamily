@@ -7,8 +7,8 @@ import {
   ScrollView,
   Animated,
 } from 'react-native';
-import {useNavigation, useRoute} from '@react-navigation/native';
-import type {NativeStackNavigationProp, RouteProp} from '@react-navigation/native-stack';
+import {useNavigation, useRoute, type RouteProp} from '@react-navigation/native';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {useTheme} from '../../theme';
 import {useLearnerStore} from '../../store/useLearnerStore';
 import {
@@ -72,7 +72,7 @@ export function SessionSummaryScreen() {
   }
 
   return (
-    <ScreenWrapper>
+    <ScreenWrapper scrollable={false}>
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         <Animated.View
           style={[styles.heroCard, {backgroundColor: colors.primary, opacity: fadeAnim, transform: [{scale: scaleAnim}]}]}>

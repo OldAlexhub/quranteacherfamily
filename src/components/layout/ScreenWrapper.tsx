@@ -1,6 +1,6 @@
 import React from 'react';
-import {ScrollView, View, StyleSheet, ViewStyle, RefreshControl} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {ScrollView, View, ViewStyle, RefreshControl} from 'react-native';
+import {SafeAreaView, type Edge} from 'react-native-safe-area-context';
 import {useTheme} from '../../theme';
 
 interface ScreenWrapperProps {
@@ -10,6 +10,7 @@ interface ScreenWrapperProps {
   contentStyle?: ViewStyle;
   onRefresh?: () => void;
   refreshing?: boolean;
+  safeAreaEdges?: Edge[];
 }
 
 export function ScreenWrapper({
@@ -19,6 +20,7 @@ export function ScreenWrapper({
   contentStyle,
   onRefresh,
   refreshing = false,
+  safeAreaEdges = ['left', 'right'],
 }: ScreenWrapperProps) {
   const theme = useTheme();
   const c = theme.colors;
@@ -27,7 +29,7 @@ export function ScreenWrapper({
 
   if (scrollable) {
     return (
-      <SafeAreaView style={[bg, style]} edges={['left', 'right']}>
+      <SafeAreaView style={[bg, style]} edges={safeAreaEdges}>
         <ScrollView
           style={{flex: 1}}
           contentContainerStyle={[{padding: 16, paddingBottom: 32}, contentStyle]}
@@ -45,7 +47,7 @@ export function ScreenWrapper({
   }
 
   return (
-    <SafeAreaView style={[bg, style]} edges={['left', 'right']}>
+    <SafeAreaView style={[bg, style]} edges={safeAreaEdges}>
       <View style={[{flex: 1}, contentStyle]}>{children}</View>
     </SafeAreaView>
   );

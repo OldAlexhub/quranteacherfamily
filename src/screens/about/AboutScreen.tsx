@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, Text, Linking, TouchableOpacity} from 'react-native';
+import {View, Text, TouchableOpacity} from 'react-native';
 import {ScreenWrapper} from '../../components/layout/ScreenWrapper';
 import {AppText} from '../../components/common/AppText';
 import {AppCard} from '../../components/common/AppCard';
@@ -21,7 +21,7 @@ export function AboutScreen() {
           <Text style={{fontSize: 32}}>📖</Text>
         </View>
         <AppText variant="title" weight="bold" center>Quran Teacher Family</AppText>
-        <AppText variant="caption" center style={{color: c.primary, marginTop: 4}}>Version 1.0.0</AppText>
+        <AppText variant="caption" center style={{color: c.primary, marginTop: 4}}>Version 1.0.4</AppText>
         <AppText variant="caption" center style={{color: c.textMuted}}>by Old Alex Hub</AppText>
       </View>
 

@@ -5,7 +5,7 @@ import {AppText} from '../../components/common/AppText';
 import {AppCard} from '../../components/common/AppCard';
 import {SectionHeader} from '../../components/layout/SectionHeader';
 import {useTheme} from '../../theme';
-import {Spacing, Radii} from '../../theme/spacing';
+import {Spacing} from '../../theme/spacing';
 import {usePreferencesStore} from '../../store/usePreferencesStore';
 
 export function AudioSettingsScreen() {

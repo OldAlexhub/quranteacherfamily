@@ -1,7 +1,6 @@
-import React, {useState, useEffect} from 'react';
-import {View, TextInput, TouchableOpacity, Text, Alert, KeyboardAvoidingView, Platform} from 'react-native';
-import {useNavigation, useRoute} from '@react-navigation/native';
-import type {RouteProp} from '@react-navigation/native-stack';
+import React, {useState} from 'react';
+import {View, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform} from 'react-native';
+import {useNavigation, useRoute, type RouteProp} from '@react-navigation/native';
 import type {HomeStackParamList} from '../../types';
 import {ScreenWrapper} from '../../components/layout/ScreenWrapper';
 import {AppText} from '../../components/common/AppText';

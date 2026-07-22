@@ -5,7 +5,6 @@ import {
   TextInput,
   ScrollView,
   TouchableOpacity,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -20,6 +19,7 @@ import {useLearnerStore} from '../../store/useLearnerStore';
 import type {RecitationStyle} from '../../types';
 
 type Step = 'welcome' | 'display' | 'recitation' | 'learner';
+const ONBOARDING_STEPS: Step[] = ['welcome', 'display', 'recitation', 'learner'];
 
 export function OnboardingScreen() {
   const theme = useTheme();
@@ -30,6 +30,7 @@ export function OnboardingScreen() {
   const [learnerName, setLearnerName] = useState('');
   const [nameError, setNameError] = useState('');
   const [loading, setLoading] = useState(false);
+  const stepIndex = ONBOARDING_STEPS.indexOf(step);
 
   const setOnboardingCompleted = usePreferencesStore(s => s.setOnboardingCompleted);
   const setEnglishHidden = usePreferencesStore(s => s.setEnglishHidden);
@@ -65,6 +66,24 @@ export function OnboardingScreen() {
     <SafeAreaView style={bg}>
       <KeyboardAvoidingView style={{flex: 1}} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={{padding: Spacing[6], flexGrow: 1}} showsVerticalScrollIndicator={false}>
+          <View style={{marginBottom: Spacing[5]}} accessibilityLabel={`Setup step ${stepIndex + 1} of ${ONBOARDING_STEPS.length}`}>
+            <AppText variant="caption" style={{color: c.textMuted, marginBottom: Spacing[2]}}>
+              Setup · Step {stepIndex + 1} of {ONBOARDING_STEPS.length}
+            </AppText>
+            <View style={{flexDirection: 'row', gap: Spacing[2]}}>
+              {ONBOARDING_STEPS.map((item, index) => (
+                <View
+                  key={item}
+                  style={{
+                    flex: 1,
+                    height: 4,
+                    borderRadius: Radii.full,
+                    backgroundColor: index <= stepIndex ? c.primary : c.border,
+                  }}
+                />
+              ))}
+            </View>
+          </View>
 
           {step === 'welcome' && (
             <View style={{flex: 1, justifyContent: 'center', minHeight: 500}}>
@@ -178,7 +197,7 @@ export function OnboardingScreen() {
             <View>
               <AppText variant="heading" weight="bold" style={{marginBottom: Spacing[2]}}>Create a Learner Profile</AppText>
               <AppText variant="body" style={{marginBottom: Spacing[2], color: c.textMuted}}>Add the first learner's name to start tracking their Quran progress. This is stored only on this device.</AppText>
-              <AppText variant="caption" style={{marginBottom: Spacing[6], color: c.textMuted, fontStyle: 'italic'}}>You can skip this step and add learners later in Settings.</AppText>
+              <AppText variant="caption" style={{marginBottom: Spacing[6], color: c.textMuted, fontStyle: 'italic'}}>You can skip this step and read without a profile, but goals and progress will not be saved.</AppText>
 
               <AppCard style={{marginBottom: Spacing[4]}}>
                 <AppText variant="body" weight="medium" style={{marginBottom: Spacing[2]}}>Learner Name (optional)</AppText>
@@ -190,7 +209,7 @@ export function OnboardingScreen() {
                   }}
                   placeholder="e.g. Yahya, Omar, or leave blank"
                   placeholderTextColor={c.textMuted}
-                  maxLength={32}
+                  maxLength={30}
                   style={{
                     borderWidth: 1,
                     borderColor: nameError ? c.error : c.border,
@@ -209,7 +228,7 @@ export function OnboardingScreen() {
               <View style={{flexDirection: 'row', gap: Spacing[3]}}>
                 <AppButton label="Back" onPress={() => setStep('recitation')} variant="ghost" style={{flex: 1}} />
                 <AppButton label="Skip" onPress={() => finish(true)} variant="secondary" style={{flex: 1}} loading={loading} />
-                <AppButton label="Start" onPress={() => finish(false)} style={{flex: 2}} loading={loading} disabled={!!nameError} />
+                <AppButton label="Create & Start" onPress={() => finish(false)} style={{flex: 2}} loading={loading} disabled={!learnerName.trim() || !!nameError} />
               </View>
             </View>
           )}
