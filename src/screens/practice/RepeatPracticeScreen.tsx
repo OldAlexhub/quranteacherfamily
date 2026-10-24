@@ -16,6 +16,7 @@ import {usePreferencesStore} from '../../store/usePreferencesStore';
 import {useProgressStore} from '../../store/useProgressStore';
 import {useLearnerStore} from '../../store/useLearnerStore';
 import {playRange, stopAudio} from '../../audio/audioPlayer';
+import {splitOpeningBasmala} from '../../data/basmala';
 
 type Route = RouteProp<PracticeStackParamList, 'RepeatPractice'>;
 
@@ -30,19 +31,13 @@ const MODE_META: Record<
   memorization_review: {summary: 'Memorization review', start: 'Start Review', stop: 'Stop Review'},
 };
 
-const BASMALA_WORD_COUNT = 4;
-
 function splitAyahWords(ayah?: Ayah | null): string[] {
   if (!ayah) return [];
   const words = ayah.words?.length
     ? ayah.words.map(word => word.arabicWord)
     : ayah.arabicText.trim().split(/\s+/).filter(Boolean);
-  // The API prepends the Basmala to ayah 1 of every surah except Al-Fatihah,
-  // but the audio skips it — strip it so word-sync stays accurate.
-  if (ayah.ayahNumber === 1 && ayah.surahNumber !== 1 && words.length > BASMALA_WORD_COUNT) {
-    return words.slice(BASMALA_WORD_COUNT);
-  }
-  return words;
+  const opening=splitOpeningBasmala(ayah.surahNumber,ayah.ayahNumber,words.join(' '));
+  return words.slice(opening.prefixWords);
 }
 
 function parsePracticeTrackId(id?: string): {surahNumber: number; ayahNumber: number; repeatIndex: number} | null {

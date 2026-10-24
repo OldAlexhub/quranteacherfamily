@@ -1,4 +1,5 @@
 /* eslint-env jest */
+jest.mock('react-native-file-access', () => ({Dirs:{DocumentDir:'/documents'},FileSystem:{exists:jest.fn().mockResolvedValue(false)}}));
 
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
@@ -39,9 +40,15 @@ jest.mock('react-native-google-mobile-ads', () => {
     default: jest.fn(() => mobileAds),
     MaxAdContentRating: {G: 'G'},
     BannerAd: () => null,
-    BannerAdSize: {BANNER: 'BANNER'},
+    BannerAdSize: {BANNER: 'BANNER', ANCHORED_ADAPTIVE_BANNER:'ANCHORED_ADAPTIVE_BANNER'},
+    AdsConsent: {
+      requestInfoUpdate: jest.fn().mockResolvedValue({canRequestAds:true}),
+      loadAndShowConsentFormIfRequired: jest.fn().mockResolvedValue({canRequestAds:true}),
+      getConsentInfo: jest.fn().mockResolvedValue({canRequestAds:true}),
+      showPrivacyOptionsForm: jest.fn().mockResolvedValue(undefined),
+    },
     TestIds: {BANNER: 'test-banner', INTERSTITIAL: 'test-interstitial'},
-    AdEventType: {LOADED: 'loaded', ERROR: 'error', CLOSED: 'closed'},
+    AdEventType: {LOADED: 'loaded', ERROR: 'error', CLOSED: 'closed', OPENED:'opened', PAID:'paid'},
     InterstitialAd: {createForAdRequest: jest.fn(() => interstitial)},
   };
 });
@@ -54,10 +61,13 @@ jest.mock('react-native-track-player', () => {
     add: jest.fn().mockResolvedValue(undefined),
     play: jest.fn().mockResolvedValue(undefined),
     pause: jest.fn().mockResolvedValue(undefined),
+    setRate: jest.fn().mockResolvedValue(undefined),
+    seekTo: jest.fn().mockResolvedValue(undefined),
+    getProgress: jest.fn().mockResolvedValue({position:4.25,duration:10,buffered:10}),
     stop: jest.fn().mockResolvedValue(undefined),
     skipToNext: jest.fn().mockResolvedValue(undefined),
     skipToPrevious: jest.fn().mockResolvedValue(undefined),
-    addEventListener: jest.fn(() => jest.fn()),
+    addEventListener: jest.fn(() => ({remove:jest.fn()})),
     registerPlaybackService: jest.fn(),
   };
 
@@ -73,8 +83,10 @@ jest.mock('react-native-track-player', () => {
     },
     State: {Playing: 'playing', Paused: 'paused', Stopped: 'stopped'},
     RepeatMode: {Off: 'off', Track: 'track', Queue: 'queue'},
+    AndroidAudioContentType: {Speech:'speech'},
     Event: {
       PlaybackQueueEnded: 'playback-queue-ended',
+      PlaybackProgressUpdated: 'playback-progress',
       PlaybackError: 'playback-error',
       RemotePlay: 'remote-play',
       RemotePause: 'remote-pause',

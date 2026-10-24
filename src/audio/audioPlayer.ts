@@ -2,6 +2,7 @@ import TrackPlayer, {
   Capability,
   State,
   RepeatMode,
+  AndroidAudioContentType,
 } from 'react-native-track-player';
 import {resolveAudioPath} from '../data/loaders';
 import type {RecitationStyle} from '../types';
@@ -15,8 +16,11 @@ export async function initializePlayer(): Promise<void> {
       minBuffer: 5,
       maxBuffer: 50,
       playBuffer: 2,
+      autoHandleInterruptions: true,
+      androidAudioContentType: AndroidAudioContentType.Speech,
     });
     await TrackPlayer.updateOptions({
+      progressUpdateEventInterval: 1,
       capabilities: [
         Capability.Play,
         Capability.Pause,

@@ -17,6 +17,7 @@ import {
 } from '../../data/loaders';
 import {usePreferencesStore} from '../../store/usePreferencesStore';
 import {playAyah, stopAudio} from '../../audio/audioPlayer';
+import {splitOpeningBasmala} from '../../data/basmala';
 
 type Route = RouteProp<QuranStackParamList, 'WordTeacherMode'>;
 type Nav = NativeStackNavigationProp<QuranStackParamList, 'WordTeacherMode'>;
@@ -48,14 +49,10 @@ export function WordTeacherModeScreen() {
     item => item.surahNumber === surahNumber && item.ayahNumber === currentAyahNumber,
   ) ?? getAyah(surahNumber, currentAyahNumber);
 
-  const BASMALA_WORD_COUNT = 4;
   const rawWords = ayah?.words?.length
     ? ayah.words.map(word => word.arabicWord)
     : (ayah?.arabicText.trim().split(/\s+/) ?? []);
-  const basmalaOffset =
-    ayah?.ayahNumber === 1 && ayah?.surahNumber !== 1 && rawWords.length > BASMALA_WORD_COUNT
-      ? BASMALA_WORD_COUNT
-      : 0;
+  const basmalaOffset = ayah?splitOpeningBasmala(ayah.surahNumber,ayah.ayahNumber,rawWords.join(' ')).prefixWords:0;
   const words = basmalaOffset > 0 ? rawWords.slice(basmalaOffset) : rawWords;
   const initialWordIndex = Math.min(Math.max(wordIndex ?? 0, 0), Math.max(words.length - 1, 0));
   const [currentWordIdx, setCurrentWordIdx] = useState(initialWordIndex);

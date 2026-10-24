@@ -1,103 +1,45 @@
-# Privacy Policy
+# Quran Teacher Family — Privacy Policy
 
-**App name:** Quran Teacher Family  
-**Developer:** Old Alex Hub  
-**Package:** com.oldalexhub.quranteacherfamily  
-**Effective date:** 2024  
-**Last updated:** 2024
+Updated: October 24, 2026. Developer: Old Alex Hub.
 
----
+Quran Teacher Family helps children and adults memorize and understand the Quran. No learner account is required. The app uses an Old Alex Hub server for Quran resources, general app analytics, and operational configuration, and Google AdMob for advertising.
 
-## 1. Summary
+## Learning data on your device
 
-Quran Teacher Family is a free app supported by Google AdMob banner and interstitial ads. The app does not operate a backend server. The developer does not collect, receive, or store personal data. Local learner data stays on your device.
+Learner profiles and optional names, bookmarks, notes, assignments, settings, passage-level practice and recall history, and personalization state are stored on your device. These fields are not included in the app's analytics events or uploaded as training history. The app does not record your voice or send recordings for pronunciation scoring.
 
----
+## General app analytics
 
-## 2. Advertising
+General app analytics are enabled by default for new installations. You can turn them off in practice settings using “Share general app analytics.” An existing choice to turn them off is preserved during upgrades.
 
-This app displays Google AdMob banner and interstitial ads to support free access.
+When enabled, the app sends a random installation identifier, event identifiers and timestamps, app version, interface language, and general activity events to `quran.server.oldalexhub.com`. Events cover app opens, onboarding, lesson starts/completions and session duration, playback/download/app failures, ad loads/failures/impressions, and SDK-reported ad revenue, currency, and precision. Events do not contain learner names or IDs, surah/ayah identifiers, recall histories, notes, recordings, or personalization state.
 
-**Banner ads** appear at the bottom of non-Quran-text screens such as Home, Parent Dashboard, Surah List, Progress, and Settings. Banner ads never appear inside the Quran text stream, between ayahs, in Word-by-Word Teacher Mode, during active audio playback, or during active practice sessions.
+Events are queued locally, with a maximum of 300 events, and sent in batches. The server hashes installation identifiers using a private server salt before storing them. Event data is retained for up to 90 days, with periodic cleanup. Turning analytics off clears the local queue and replaces the installation identifier; previously received events expire under the retention policy. “Reset analytics identifier” also clears the queue and replaces that identifier. Resetting does not delete events already received by the server.
 
-**Interstitial ads** are shown only at natural stopping points such as after completing an assignment or after finishing a practice session. Interstitial ads are strictly limited: maximum 1 every 10 minutes, maximum 3 per app session, and only after at least 3 minutes of app use. They never appear during onboarding, when opening the Quran reader, during active Quran reading, or during any audio playback or practice.
+Requests to our server and external content services necessarily expose network information such as your IP address to those services and their hosting infrastructure. The application telemetry database does not store IP addresses. Hosting or network service logs may be managed separately by those providers.
 
-Google AdMob may process advertising identifiers or device-related information for ad delivery, ad measurement, fraud prevention, and frequency capping as described in Google's Privacy Policy at policies.google.com/privacy.
+## Advertising
 
-**Ads require internet access.** Quran reading and local learning features continue to work without internet. If offline, ads may not load but the app continues working.
+Google AdMob banners appear on Learn, Quran browsing, Progress, and settings. Reading, tafsir, lessons, recall, and recitation are free of ads. An interstitial may appear only when returning home after completing practice, subject to limits: every third completion, at least ten minutes between displays, after three minutes of app use, and at most three per app session.
 
----
+Ad requests use child-directed treatment, under-age-of-consent treatment, maximum content rating G, and nonpersonalized requests. Google's consent tools control ad eligibility and applicable privacy choices. You can access “Advertising privacy choices” in settings when available. Turning off our general analytics does not turn off advertising or the ad provider's own measurement.
 
-## 3. Local Learning Data
+Google may process device and network information for ad delivery, measurement, security, and fraud prevention according to its [Privacy Policy](https://policies.google.com/privacy). Reported ad revenue is estimated unless separately reconciled with finalized earnings.
 
-All data you create in this app stays on your device only:
+## Quran content
 
-- Learner profiles (optional names and color preferences)
-- Bookmarks and notes
-- Daily assignments
-- Preferences and settings
-- Practice history, reading progress, and memorization status
-- Listening time
+Bundled Quran text and English meaning support local reading. Online resources and permitted downloads use Quran Foundation through our server and audio providers including Quran Foundation's audio CDN and Islamic Network. Requests identify the requested content; this is distinct from our general analytics events, which exclude passage identifiers. Tafsir and surah introductions display their sources in the app. Downloaded resources are stored locally and refreshed according to provider requirements.
 
-This data is not accessible to Old Alex Hub.
+## Children and family use
 
----
+The app can be used under parent or guardian supervision. It does not require a child's email, phone number, birth date, or location. Optional learner names remain on the device. Advertising is configured for a child-directed audience. Parents and guardians can disable general analytics in settings.
 
-## 4. Quran Text and Audio (Internet Required)
+## Permissions and deletion
 
-Arabic Quran text and English meaning are fetched from the Al-Quran Cloud API (alquran.cloud) and cached locally on your device. Audio recitation is streamed from the Islamic Network CDN (cdn.islamic.network). These are free open services. The developer does not control these services and their own privacy policies may apply.
+Internet/network access supports content, ads, and analytics. Audio uses Android foreground media playback services. Notification permission is optional for reminders. The app does not request microphone, camera, contacts, SMS, or precise-location access.
 
----
+Android's app storage controls can clear local profiles, progress, notes, downloads, preferences, and the installation identifier; uninstalling also removes app-local data. Clearing storage is irreversible. Server analytics already received expire under the retention policy above.
 
-## 5. Permissions
+## Contact
 
-**INTERNET:** Required for loading Quran text, English meaning, audio streaming, and ads.
-
-**ACCESS_NETWORK_STATE:** Used by the ad SDK to detect connectivity for ad loading.
-
-**POST_NOTIFICATIONS:** Optional. Used only for daily practice reminders if enabled.
-
-**FOREGROUND_SERVICE:** Used for audio playback continuity.
-
-The app does **not** use: location, camera, microphone, contacts, phone, SMS, or broad storage access.
-
----
-
-## 6. Children's Privacy
-
-This app may be used by families and children under parent or guardian supervision. The app does not knowingly collect personal information from children. Learner profiles contain only optional names. No email, phone, date of birth, or other personal information is required.
-
-Ads in this app are configured for a child-safe experience with maximum ad content rating G and child-directed treatment enabled where applicable.
-
----
-
-## 7. Data Deletion
-
-- Delete individual learner data: Parent Dashboard → select learner → Delete.
-- Delete all local data: Settings → Reset all local data.
-- Uninstall the app to remove all local data.
-
----
-
-## 8. Content Attribution
-
-- Arabic Quran text: Al-Quran Cloud API (Uthmani script from Tanzil, tanzil.net)
-- English meaning: Pickthall translation (public domain, 1930)
-- Audio: Islamic Network CDN (cdn.islamic.network)
-- Full attribution in app: Settings → Content Attribution
-
----
-
-## 9. Disclaimer
-
-This app is a Quran learning companion. It does not replace a qualified Quran teacher, imam, scholar, or Tajweed instructor. English meaning is provided only to aid understanding and does not replace the Arabic Quran.
-
----
-
-## 10. Contact
-
-For privacy policy questions, contact Old Alex Hub via the Google Play Store listing for Quran Teacher Family.
-
----
-
-*Quran Teacher Family — by Old Alex Hub*
+For privacy questions, contact Old Alex Hub through the Google Play listing for Quran Teacher Family.
