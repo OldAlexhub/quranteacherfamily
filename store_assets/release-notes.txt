@@ -8,3 +8,4 @@ Updated for Android 16 with a clearer, safer learning experience.
 - Fixed assignment buttons that did not open practice
 - Improved session setup and full-screen practice layout
 - Corrected misleading progress and audio controls
+- Reduced release size and enabled Android performance optimization
